@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::PathBuf;
+use std::process;
 
 pub struct GitRepository {
     worktree: PathBuf,
@@ -15,7 +16,6 @@ impl GitRepository {
     }
 
     pub fn get_git_dir(&self) -> PathBuf {
-    pub fn get_git_dir(self) -> PathBuf {
         self.git_dir.clone()
     }
 }
@@ -53,3 +53,19 @@ pub fn repo_create(path: &PathBuf) -> Result<String, String> {
     Ok(String::from("Initialized empty DGit repository"))
 }
 
+pub fn repo_find(path: &PathBuf) -> GitRepository {
+    let git_dir_path: PathBuf = path.join(".git");
+    if git_dir_path.exists() {
+        return GitRepository::new(&path);
+    }
+    match path.parent() {
+        None => {
+            println!("Not working within a Git repository");
+            process::exit(1);
+        }
+
+        Some(_) => {
+            return repo_find(&path.parent().unwrap().to_path_buf());
+        }
+    }
+}

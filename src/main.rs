@@ -31,6 +31,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         },
 
+        "status" => {
+            println!(
+                "{:?}",
+                repo::repo_find(&current_directory_path).get_git_dir(),
+            );
+        }
+
         _ => {
             println!("Invalid command");
         }
