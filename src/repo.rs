@@ -14,17 +14,27 @@ impl GitRepository {
         }
     }
 
+    pub fn get_git_dir(&self) -> PathBuf {
     pub fn get_git_dir(self) -> PathBuf {
         self.git_dir.clone()
     }
 }
 
+pub fn repo_path(repo: &GitRepository, paths: &[&str]) -> PathBuf {
+    // Compute path under repo's gitdir
+    let mut result: PathBuf = repo.get_git_dir();
+    for path in paths {
+        result = result.join(path);
+    }
+    result
+}
+
 pub fn repo_create(path: &PathBuf) -> Result<String, String> {
     let repo: GitRepository = GitRepository::new(path);
-    let git_dir_path: PathBuf = PathBuf::from(repo.get_git_dir());
-    let head_file_path: PathBuf = PathBuf::from(&git_dir_path).join("HEAD");
-    let ref_dir_path: PathBuf = PathBuf::from(&git_dir_path).join("refs/heads");
-    let object_dir_path: PathBuf = PathBuf::from(&git_dir_path).join("objects");
+    let git_dir_path: PathBuf = repo_path(&repo, &[]);
+    let head_file_path: PathBuf = repo_path(&repo, &["HEAD"]);
+    let ref_dir_path: PathBuf = repo_path(&repo, &["refs", "heads"]);
+    let object_dir_path: PathBuf = repo_path(&repo, &["objects"]);
 
     match fs::create_dir(git_dir_path) {
         Ok(v) => {
