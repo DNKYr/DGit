@@ -1,8 +1,6 @@
 mod repo;
 
 use std::env;
-use std::fs;
-use std::path::PathBuf;
 use std::process;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
