@@ -29,12 +29,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         },
 
-        "status" => {
-            println!(
-                "{:?}",
-                repo::repo_find(&current_directory_path).get_git_dir(),
-            );
-        }
+        "status" => match repo::repo_find(&current_directory_path) {
+            Ok(repo) => {
+                println!("{:?}", repo.get_git_dir().display());
+            }
+
+            Err(err_msg) => {
+                println!("{err_msg}");
+                process::exit(1);
+            }
+        },
+
+        "hash-object" => {}
 
         _ => {
             println!("Invalid command");
