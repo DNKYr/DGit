@@ -1,4 +1,5 @@
 use std::fs;
+use std::io;
 use std::path::PathBuf;
 
 pub struct GitRepository {
@@ -26,6 +27,42 @@ pub fn repo_path(repo: &GitRepository, paths: &[&str]) -> PathBuf {
         result = result.join(path);
     }
     result
+}
+
+pub fn repo_file(repo: &GitRepository, paths: &[&str], mkdir: Option<bool>) -> io::Result<PathBuf> {
+    match repo_dir(repo, paths, mkdir) {
+        Ok(path) => {
+            return Ok(repo_path(repo, paths));
+        }
+        Err(e) => {
+            return Err(e);
+        }
+    }
+}
+
+pub fn repo_dir(repo: &GitRepository, paths: &[&str], mkdir: Option<bool>) -> io::Result<PathBuf> {
+    let path = repo_path(repo, paths);
+
+    if path.exists() {
+        if path.is_dir() {
+            return Ok(path);
+        } else {
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                "Path exists but is not a directory",
+            ));
+        }
+    }
+
+    if mkdir.unwrap_or(false) {
+        fs::create_dir_all(&path)?;
+        return Ok(path);
+    } else {
+        return Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            "Directory does not exist",
+        ));
+    }
 }
 
 pub fn repo_create(path: &PathBuf) -> Result<String, String> {
