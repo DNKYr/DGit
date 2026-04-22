@@ -1,9 +1,12 @@
 use crate::repo;
 
 use compress::zlib;
+use flate2::Compression;
+use flate2::write::ZlibEncoder;
+use sha1::{Digest, Sha1};
 use std::{
-    fs::File,
-    io::{self, Read},
+    fs::{self, File},
+    io::{self, Read, Write},
     path::PathBuf,
     process::exit,
 };
