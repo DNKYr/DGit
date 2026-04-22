@@ -13,6 +13,9 @@ use std::{
 
 enum GitObject {
     Blob(BlobObject),
+    Commit(Vec<u8>),
+    Tag(Vec<u8>),
+    Tree(Vec<u8>),
 }
 
 struct BlobObject {
