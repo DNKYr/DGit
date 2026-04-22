@@ -22,6 +22,64 @@ struct BlobObject {
     data: Vec<u8>,
 }
 
+impl GitObject {
+    fn write(&self, repo: Option<&repo::GitRepository>) -> io::Result<String> {
+        // serialize the data
+        let data = self.serialize();
+
+        // Handle fmt and size
+        let fmt_bytes = self.get_format().as_bytes();
+        let size_bytes = data.len().to_string().into_bytes();
+
+        // Construct the <fmt> <size>\0<data>
+        let mut result = Vec::new();
+        result.extend_from_slice(fmt_bytes);
+        result.push(b' ');
+        result.extend_from_slice(&size_bytes);
+        result.push(0);
+        result.extend_from_slice(&data);
+
+        // Calculate the hash
+        let mut hasher = Sha1::new();
+        hasher.update(&result);
+        let sha = hex::encode(hasher.finalize());
+
+        if let Some(r) = repo {
+            let path =
+                repo::repo_file(&r, &["objects", &sha[0..2], &sha[2..]], Option::from(true))?;
+
+            if !path.exists() {
+                let file = fs::File::create(path)?;
+                let mut encoder = ZlibEncoder::new(file, Compression::default());
+                encoder.write_all(&result)?;
+                encoder.finish()?;
+            }
+        }
+
+        Ok(sha)
+    }
+
+    fn get_format(&self) -> &str {
+        match self {
+            GitObject::Blob(_) => "blob",
+            GitObject::Commit(_) => "commit",
+            GitObject::Tag(_) => "tag",
+            GitObject::Tree(_) => "tree",
+        }
+    }
+
+    fn serialize(&self) -> Vec<u8> {
+        match self {
+            GitObject::Blob(blob) => blob.data.clone(),
+            GitObject::Commit(data) => data.clone(),
+            _ => {
+                println!("Unimplemented ");
+                exit(1);
+            }
+        }
+    }
+}
+
 impl BlobObject {
     fn new(data: Vec<u8>) -> Self {
         Self { data }
