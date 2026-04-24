@@ -1,36 +1,42 @@
+mod cli;
 mod object;
 mod repo;
 
+use clap::Parser;
+use cli::{Cli, Commands};
 use std::env;
 use std::process;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args: Vec<String> = env::args().collect();
+    let cli = Cli::parse();
 
-    let len_args = args.len();
-
-    match len_args {
-        0 => {
-            println!("Invalid to input 0 arguments");
-            process::exit(1);
-        }
-        _ => {}
-    }
-
-    let command = &args[1];
     let current_directory_path = env::current_dir()?;
 
-    match command.as_str() {
-        "init" => match repo::repo_create(&current_directory_path) {
-            Ok(success_msg) => {
-                println!("{success_msg}")
-            }
-            Err(err_msg) => {
-                println!("{err_msg}");
-            }
-        },
+    match &cli.command {
+        Commands::Init(path) => {
+            if let Some(p) = &path.path {
+                match repo::repo_create(&std::path::PathBuf::from(p)) {
+                    Ok(success_msg) => {
+                        println!("{success_msg}");
+                    }
 
-        "status" => match repo::repo_find(&current_directory_path) {
+                    Err(err_msg) => {
+                        println!("{err_msg}")
+                    }
+                }
+            } else {
+                match repo::repo_create(&current_directory_path) {
+                    Ok(success_msg) => {
+                        println!("{success_msg}");
+                    }
+
+                    Err(err_msg) => {
+                        println!("{err_msg}")
+                    }
+                }
+            }
+        }
+        Commands::Status {} => match repo::repo_find(&current_directory_path) {
             Ok(repo) => {
                 println!("{:?}", repo.get_git_dir().display());
             }
@@ -40,12 +46,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 process::exit(1);
             }
         },
-
-        "hash-object" => {}
-
-        _ => {
-            println!("Invalid command");
-        }
     }
 
     Ok(())
