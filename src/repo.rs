@@ -2,6 +2,8 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
+use crate::object;
+
 pub struct GitRepository {
     worktree: PathBuf,
     git_dir: PathBuf,
@@ -65,26 +67,17 @@ pub fn repo_dir(repo: &GitRepository, paths: &[&str], mkdir: Option<bool>) -> io
     }
 }
 
-pub fn repo_create(path: &PathBuf) -> Result<String, String> {
+pub fn repo_create(path: &PathBuf) -> io::Result<String> {
     let repo: GitRepository = GitRepository::new(path);
     let git_dir_path: PathBuf = repo_path(&repo, &[]);
     let head_file_path: PathBuf = repo_path(&repo, &["HEAD"]);
     let ref_dir_path: PathBuf = repo_path(&repo, &["refs", "heads"]);
     let object_dir_path: PathBuf = repo_path(&repo, &["objects"]);
 
-    match fs::create_dir(git_dir_path) {
-        Ok(v) => {
-            fs::create_dir(object_dir_path);
-            fs::create_dir_all(ref_dir_path);
-            fs::write(head_file_path, "ref: refs/heads/main");
-        }
-        Err(e) => {
-            println!("{e}");
-            return Err(String::from(
-                "Error, initializing on an existent git repository",
-            ));
-        }
-    }
+    fs::create_dir(git_dir_path)?;
+    fs::create_dir(object_dir_path)?;
+    fs::create_dir_all(ref_dir_path)?;
+    fs::write(head_file_path, "ref: refs/heads/main")?;
 
     Ok(String::from("Initialized empty DGit repository"))
 }
