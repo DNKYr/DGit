@@ -13,8 +13,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let current_directory_path = env::current_dir()?;
 
     match &cli.command {
-        Commands::Init(path) => {
-            if let Some(p) = &path.path {
+        Commands::Init(args) => {
+            if let Some(p) = &args.path {
                 match repo::repo_create(&std::path::PathBuf::from(p)) {
                     Ok(success_msg) => {
                         println!("{success_msg}");
@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
         }
-        Commands::Status {} => match repo::repo_find(&current_directory_path) {
+        Commands::Status {} => match repo::repo_find(Some(&current_directory_path)) {
             Ok(repo) => {
                 println!("{:?}", repo.get_git_dir().display());
             }

@@ -1,6 +1,7 @@
 use std::fs;
 use std::io;
 use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::object;
 
@@ -32,14 +33,10 @@ pub fn repo_path(repo: &GitRepository, paths: &[&str]) -> PathBuf {
 }
 
 pub fn repo_file(repo: &GitRepository, paths: &[&str], mkdir: Option<bool>) -> io::Result<PathBuf> {
-    match repo_dir(repo, paths, mkdir) {
-        Ok(path) => {
-            return Ok(repo_path(repo, paths));
-        }
-        Err(e) => {
-            return Err(e);
-        }
+    if paths.len() > 1 {
+        let _ = repo_dir(repo, &paths[..paths.len() - 1], mkdir);
     }
+    Ok(repo_path(repo, paths))
 }
 
 pub fn repo_dir(repo: &GitRepository, paths: &[&str], mkdir: Option<bool>) -> io::Result<PathBuf> {
@@ -82,10 +79,11 @@ pub fn repo_create(path: &PathBuf) -> io::Result<String> {
     Ok(String::from("Initialized empty DGit repository"))
 }
 
-pub fn repo_find(path: &PathBuf) -> Result<GitRepository, String> {
+pub fn repo_find(path: Option<&PathBuf>) -> Result<GitRepository, String> {
+    let path: &Path = path.map(|p| p.as_path()).unwrap_or(Path::new("."));
     let git_dir_path: PathBuf = path.join(".git");
     if git_dir_path.exists() {
-        return Ok(GitRepository::new(&path));
+        return Ok(GitRepository::new(&path.to_path_buf()));
     }
     match path.parent() {
         None => {
@@ -93,7 +91,7 @@ pub fn repo_find(path: &PathBuf) -> Result<GitRepository, String> {
         }
 
         Some(_) => {
-            return repo_find(&path.parent().unwrap().to_path_buf());
+            return repo_find(Some(&path.parent().unwrap().to_path_buf()));
         }
     }
 }

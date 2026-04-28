@@ -86,8 +86,8 @@ impl BlobObject {
     }
 }
 
-pub fn read_object(repo: repo::GitRepository, sha: &str) -> io::Result<GitObject> {
-    let path: PathBuf = repo::repo_file(&repo, &["objects", &sha[0..2], &sha[2..]], None)?;
+pub fn read_object(repo: &repo::GitRepository, sha: &str) -> io::Result<GitObject> {
+    let path: PathBuf = repo::repo_file(repo, &["objects", &sha[0..2], &sha[2..]], None)?;
     if !path.is_file() {
         return Err(io::Error::new(io::ErrorKind::NotFound, "Object not found"));
     }
@@ -122,7 +122,7 @@ pub fn read_object(repo: repo::GitRepository, sha: &str) -> io::Result<GitObject
     if size != raw.len() - y - 1 {
         return Err(io::Error::new(
             io::ErrorKind::Other,
-            format!("Malformed object { }: bad length", sha),
+            format!("Malformed object {}: bad length", sha),
         ));
     }
 
