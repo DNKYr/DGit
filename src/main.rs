@@ -46,6 +46,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 process::exit(1);
             }
         },
+        Commands::CatFile(args) => {
+            repo::cmd_cat_file(args).unwrap();
+        }
     }
 
     Ok(())

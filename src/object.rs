@@ -1,4 +1,7 @@
-use crate::repo;
+use crate::{
+    cli,
+    repo::{self, GitRepository},
+};
 
 use compress::zlib;
 use flate2::Compression;
@@ -11,7 +14,7 @@ use std::{
     process::exit,
 };
 
-enum GitObject {
+pub enum GitObject {
     Blob(BlobObject),
     Commit(Vec<u8>),
     Tag(Vec<u8>),
@@ -68,7 +71,7 @@ impl GitObject {
         }
     }
 
-    fn serialize(&self) -> Vec<u8> {
+    pub fn serialize(&self) -> Vec<u8> {
         match self {
             GitObject::Blob(blob) => blob.data.clone(),
             GitObject::Commit(data) => data.clone(),
@@ -146,4 +149,13 @@ pub fn read_object(repo: &repo::GitRepository, sha: &str) -> io::Result<GitObjec
             ));
         }
     }
+}
+
+pub fn find_object(
+    repo: &GitRepository,
+    name: &String,
+    fmt: Option<cli::CatFileMode>,
+    follow: Option<bool>,
+) -> String {
+    name.clone()
 }

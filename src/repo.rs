@@ -1,9 +1,10 @@
 use std::fs;
-use std::io;
-use std::path::PathBuf;
+use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
+use crate::cli;
 use crate::object;
+use crate::object::GitObject;
 
 pub struct GitRepository {
     worktree: PathBuf,
@@ -94,4 +95,17 @@ pub fn repo_find(path: Option<&PathBuf>) -> Result<GitRepository, String> {
             return repo_find(Some(&path.parent().unwrap().to_path_buf()));
         }
     }
+}
+
+pub fn cmd_cat_file(args: &cli::CatFileArgs) -> io::Result<()> {
+    let repo: GitRepository = repo_find(None).ok().unwrap();
+    cat_file(&repo, &args.object, Some(args.mode))
+}
+
+fn cat_file(repo: &GitRepository, obj: &String, fmt: Option<cli::CatFileMode>) -> io::Result<()> {
+    let obj: GitObject =
+        object::read_object(repo, &object::find_object(&repo, obj, fmt, None).as_str()).unwrap();
+    let mut stdout = io::stdout().lock();
+    stdout.write_all(&obj.serialize())?;
+    Ok(())
 }
