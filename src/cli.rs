@@ -16,6 +16,9 @@ pub enum Commands {
 
     /// Provide content of repository objects
     CatFile(CatFileArgs),
+
+    /// Compute object ID and optionally creates a blob from a file
+    HashObject(HashObjectArgs),
 }
 
 #[derive(Args)]
@@ -25,7 +28,10 @@ pub struct InitArgs {
 
 #[derive(Args)]
 pub struct CatFileArgs {
+    /// Specify the type
     pub mode: CatFileMode,
+
+    /// The object to display
     pub object: String,
 }
 
@@ -36,4 +42,27 @@ pub enum CatFileMode {
     Tree,
     Commit,
     Tag,
+}
+
+#[derive(Args)]
+pub struct HashObjectArgs {
+    /// Specify the type
+    #[arg(short, long)]
+    pub types: HashObjectType,
+
+    /// Actually write the object into the .git directory
+    #[arg(short, long)]
+    pub write: bool,
+
+    /// Read object from <file>
+    pub path: String,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+#[value(rename_all = "lower")]
+pub enum HashObjectType {
+    Blob,
+    Commit,
+    Tag,
+    Tree,
 }

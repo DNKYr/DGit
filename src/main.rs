@@ -49,6 +49,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::CatFile(args) => {
             repo::cmd_cat_file(args)?;
         }
+
+        Commands::HashObject(args) => {
+            repo::cmd_hash_object(args)?;
+        }
     }
 
     Ok(())

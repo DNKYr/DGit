@@ -21,12 +21,12 @@ pub enum GitObject {
     Tree(Vec<u8>),
 }
 
-struct BlobObject {
+pub struct BlobObject {
     data: Vec<u8>,
 }
 
 impl GitObject {
-    fn write(&self, repo: Option<&repo::GitRepository>) -> io::Result<String> {
+    pub fn write(&self, repo: Option<&repo::GitRepository>) -> io::Result<String> {
         // serialize the data
         let data = self.serialize();
 
@@ -84,7 +84,7 @@ impl GitObject {
 }
 
 impl BlobObject {
-    fn new(data: Vec<u8>) -> Self {
+    pub fn new(data: Vec<u8>) -> Self {
         Self { data }
     }
 }

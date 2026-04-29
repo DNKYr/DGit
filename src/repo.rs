@@ -118,3 +118,33 @@ fn cat_file(repo: &GitRepository, obj: &String, fmt: Option<cli::CatFileMode>) -
     stdout.write_all(&obj.serialize())?;
     Ok(())
 }
+
+pub fn cmd_hash_object(args: &cli::HashObjectArgs) -> io::Result<()> {
+    let sha: String = match args.write {
+        true => hash_object(
+            &PathBuf::from(&args.path),
+            &args.types,
+            Some(&repo_find(None)?),
+        )?,
+
+        false => hash_object(&PathBuf::from(&args.path), &args.types, None)?,
+    };
+    println!("{sha}");
+    Ok(())
+}
+
+fn hash_object(
+    file_path: &PathBuf,
+    fmt: &cli::HashObjectType,
+    repo: Option<&GitRepository>,
+) -> io::Result<String> {
+    let data: Vec<u8> = fs::read(file_path)?;
+    let obj: GitObject = match fmt {
+        cli::HashObjectType::Blob => object::GitObject::Blob(object::BlobObject::new(data)),
+        _ => {
+            unimplemented!("other three objects type");
+        }
+    };
+
+    obj.write(repo)
+}
