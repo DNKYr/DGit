@@ -1,3 +1,4 @@
+use std::env;
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -80,25 +81,33 @@ pub fn repo_create(path: &PathBuf) -> io::Result<String> {
     Ok(String::from("Initialized empty DGit repository"))
 }
 
-pub fn repo_find(path: Option<&PathBuf>) -> Result<GitRepository, String> {
-    let path: &Path = path.map(|p| p.as_path()).unwrap_or(Path::new("."));
+pub fn repo_find(path: Option<&PathBuf>) -> io::Result<GitRepository> {
+    let current_directory = env::current_dir()?;
+    let path: &Path = path
+        .map(|p| p.as_path())
+        .unwrap_or(&current_directory.as_path());
+
     let git_dir_path: PathBuf = path.join(".git");
+
     if git_dir_path.exists() {
         return Ok(GitRepository::new(&path.to_path_buf()));
     }
     match path.parent() {
         None => {
-            return Err(String::from("Not working within a Git repository"));
+            return Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                String::from("Not working within a Git repository"),
+            ));
         }
 
-        Some(_) => {
-            return repo_find(Some(&path.parent().unwrap().to_path_buf()));
+        Some(parent_path) => {
+            return repo_find(Some(&parent_path.to_path_buf()));
         }
     }
 }
 
 pub fn cmd_cat_file(args: &cli::CatFileArgs) -> io::Result<()> {
-    let repo: GitRepository = repo_find(None).ok().unwrap();
+    let repo: GitRepository = repo_find(None)?;
     cat_file(&repo, &args.object, Some(args.mode))
 }
 
