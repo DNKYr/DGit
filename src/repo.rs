@@ -36,7 +36,7 @@ pub fn repo_path(repo: &GitRepository, paths: &[&str]) -> PathBuf {
 
 pub fn repo_file(repo: &GitRepository, paths: &[&str], mkdir: Option<bool>) -> io::Result<PathBuf> {
     if paths.len() > 1 {
-        let _ = repo_dir(repo, &paths[..paths.len() - 1], mkdir);
+        let _ = repo_dir(repo, &paths[..paths.len() - 1], mkdir)?;
     }
     Ok(repo_path(repo, paths))
 }
@@ -113,9 +113,9 @@ pub fn cmd_cat_file(args: &cli::CatFileArgs) -> io::Result<()> {
 
 fn cat_file(repo: &GitRepository, obj: &String, fmt: Option<cli::CatFileMode>) -> io::Result<()> {
     let obj: GitObject =
-        object::read_object(repo, &object::find_object(&repo, obj, fmt, None).as_str()).unwrap();
+        object::read_object(repo, &object::find_object(&repo, obj, fmt, None).as_str())?;
     let mut stdout = io::stdout().lock();
-    stdout.write_all(&obj.serialize())?;
+    stdout.write_all(&obj.serialize()?)?;
     Ok(())
 }
 

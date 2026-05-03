@@ -15,25 +15,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     match &cli.command {
         Commands::Init(args) => {
             if let Some(p) = &args.path {
-                match repo::repo_create(&std::path::PathBuf::from(p)) {
-                    Ok(success_msg) => {
-                        println!("{success_msg}");
-                    }
-
-                    Err(err_msg) => {
-                        println!("{err_msg}")
-                    }
-                }
+                let msg = repo::repo_create(&std::path::PathBuf::from(p))?;
+                println!("{msg}");
             } else {
-                match repo::repo_create(&current_directory_path) {
-                    Ok(success_msg) => {
-                        println!("{success_msg}");
-                    }
-
-                    Err(err_msg) => {
-                        println!("{err_msg}")
-                    }
-                }
+                let msg = repo::repo_create(&current_directory_path)?;
+                println!("{msg}");
             }
         }
         Commands::Status {} => match repo::repo_find(Some(&current_directory_path)) {
