@@ -3,8 +3,8 @@ use crate::{
     repo::{self, GitRepository},
 };
 
-use compress::zlib;
 use flate2::Compression;
+use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
 use sha1::{Digest, Sha1};
 use std::{
@@ -97,7 +97,7 @@ pub fn read_object(repo: &repo::GitRepository, sha: &str) -> io::Result<GitObjec
 
     let stream = File::open(&path)?;
     let mut raw = Vec::new();
-    zlib::Decoder::new(stream).read_to_end(&mut raw)?;
+    ZlibDecoder::new(stream).read_to_end(&mut raw)?;
 
     // 1. Find the first space (type delimiter)
     let x = raw
