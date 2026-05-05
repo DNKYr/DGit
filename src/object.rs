@@ -98,6 +98,10 @@ impl CommitObject {
     pub fn new(kvlm: IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>) -> Self {
         Self { kvlm }
     }
+
+    pub fn get_kvlm(&self) -> &IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>> {
+        &self.kvlm
+    }
 }
 
 pub fn read_object(repo: &repo::GitRepository, sha: &str) -> io::Result<GitObject> {

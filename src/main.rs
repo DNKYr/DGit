@@ -39,6 +39,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::HashObject(args) => {
             repo::cmd_hash_object(args)?;
         }
+
+        Commands::Log(args) => {
+            repo::cmd_log(args)?;
+        }
     }
 
     Ok(())

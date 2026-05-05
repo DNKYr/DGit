@@ -19,6 +19,9 @@ pub enum Commands {
 
     /// Compute object ID and optionally creates a blob from a file
     HashObject(HashObjectArgs),
+
+    /// Display history of a given commit
+    Log(LogArgs),
 }
 
 #[derive(Args)]
@@ -65,4 +68,10 @@ pub enum HashObjectType {
     Commit,
     Tag,
     Tree,
+}
+
+#[derive(Args)]
+pub struct LogArgs {
+    /// Commit to start at
+    pub commit_hash: Option<String>,
 }
