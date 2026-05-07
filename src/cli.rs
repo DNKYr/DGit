@@ -22,6 +22,9 @@ pub enum Commands {
 
     /// Display history of a given commit
     Log(LogArgs),
+
+    /// Pretty-print a tree object.
+    LsTree(LsTreeArgs),
 }
 
 #[derive(Args)]
@@ -32,7 +35,7 @@ pub struct InitArgs {
 #[derive(Args)]
 pub struct CatFileArgs {
     /// Specify the type
-    pub mode: CatFileMode,
+    pub mode: ObjectMode,
 
     /// The object to display
     pub object: String,
@@ -40,7 +43,7 @@ pub struct CatFileArgs {
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 #[value(rename_all = "lower")]
-pub enum CatFileMode {
+pub enum ObjectMode {
     Blob,
     Tree,
     Commit,
@@ -74,4 +77,14 @@ pub enum HashObjectType {
 pub struct LogArgs {
     /// Commit to start at
     pub commit_hash: Option<String>,
+}
+
+#[derive(Args)]
+pub struct LsTreeArgs {
+    /// Recurse into sub-trees
+    #[arg(short)]
+    pub recursive: bool,
+
+    /// A tree-ish object
+    pub tree: String,
 }

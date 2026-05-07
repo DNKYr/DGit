@@ -43,6 +43,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Log(args) => {
             repo::cmd_log(args)?;
         }
+
+        Commands::LsTree(args) => {
+            repo::cmd_ls_tree(args)?;
+        }
     }
 
     Ok(())

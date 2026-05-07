@@ -113,7 +113,7 @@ pub fn cmd_cat_file(args: &cli::CatFileArgs) -> io::Result<()> {
     cat_file(&repo, &args.object, Some(args.mode))
 }
 
-fn cat_file(repo: &GitRepository, obj: &String, fmt: Option<cli::CatFileMode>) -> io::Result<()> {
+fn cat_file(repo: &GitRepository, obj: &String, fmt: Option<cli::ObjectMode>) -> io::Result<()> {
     let obj: GitObject =
         object::read_object(repo, &object::find_object(&repo, obj, fmt, None).as_str())?;
     let mut stdout = io::stdout().lock();
@@ -219,6 +219,76 @@ fn log_graphviz(repo: &GitRepository, sha: String, seen: &mut IndexSet<String>) 
         };
         println!("c_{} -> c_{}", sha, decode_p);
         log_graphviz(repo, decode_p, seen)?;
+    }
+    Ok(())
+}
+
+pub fn cmd_ls_tree(args: &cli::LsTreeArgs) -> io::Result<()> {
+    let repo = repo_find(None)?;
+    ls_tree(&repo, &args.tree, args.recursive, None)
+}
+
+fn ls_tree(
+    repo: &GitRepository,
+    reference: &String,
+    recursive: bool,
+    prefix: Option<Vec<u8>>,
+) -> io::Result<()> {
+    let prefix = prefix.unwrap_or(Vec::new());
+
+    let sha = object::find_object(repo, reference, Some(cli::ObjectMode::Tree), None);
+    let obj: object::TreeObject = match object::read_object(repo, &sha)? {
+        GitObject::Tree(tree) => tree,
+        _ => {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "The reference is not an tree object",
+            ));
+        }
+    };
+
+    for item in obj.get_items() {
+        let types = match item.mode.len() {
+            5 => &item.mode[0..1],
+            _ => &item.mode[0..2],
+        };
+
+        let types = match types {
+            b"4" | b"04" => String::from("tree"),
+            b"10" => String::from("blob"),
+            b"12" => String::from("blob"),
+            b"16" => String::from("commit"),
+            _ => {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "Weird tree leaf mode",
+                ));
+            }
+        };
+
+        let mut n_prefix = prefix.clone();
+        if !n_prefix.is_empty() {
+            n_prefix.push(b'/');
+        }
+        n_prefix.extend(&item.path);
+
+        let sha_hex = &item
+            .sha
+            .iter()
+            .map(|b| format!("{:02x}", b))
+            .collect::<String>();
+
+        if !(recursive && types == "tree") {
+            println!(
+                "{} {} {}  {}",
+                String::from_utf8_lossy(&item.mode),
+                types,
+                sha_hex,
+                String::from_utf8_lossy(&n_prefix),
+            );
+        } else {
+            ls_tree(repo, sha_hex, recursive, Some(n_prefix.to_vec()))?
+        }
     }
     Ok(())
 }
