@@ -47,6 +47,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::LsTree(args) => {
             repo::cmd_ls_tree(args)?;
         }
+
+        Commands::Checkout(args) => {
+            repo::cmd_checkout(args)?;
+        }
     }
 
     Ok(())

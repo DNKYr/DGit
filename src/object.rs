@@ -23,7 +23,7 @@ pub enum GitObject {
 }
 
 pub struct BlobObject {
-    data: Vec<u8>,
+    pub data: Vec<u8>,
 }
 
 pub struct CommitObject {

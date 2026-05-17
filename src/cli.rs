@@ -25,6 +25,9 @@ pub enum Commands {
 
     /// Pretty-print a tree object.
     LsTree(LsTreeArgs),
+
+    /// Checkout a commit inside of a directory
+    Checkout(CheckoutArgs),
 }
 
 #[derive(Args)]
@@ -87,4 +90,13 @@ pub struct LsTreeArgs {
 
     /// A tree-ish object
     pub tree: String,
+}
+
+#[derive(Args)]
+pub struct CheckoutArgs {
+    /// The commit or tree to checkout
+    pub commit: String,
+
+    /// The EMPTY directory to checkout on
+    pub path: String,
 }
