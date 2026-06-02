@@ -28,6 +28,9 @@ pub enum Commands {
 
     /// Checkout a commit inside of a directory
     Checkout(CheckoutArgs),
+
+    /// List references
+    ShowRef {},
 }
 
 #[derive(Args)]

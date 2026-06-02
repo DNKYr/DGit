@@ -3,7 +3,7 @@ use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
-use indexmap::IndexSet;
+use indexmap::{IndexMap, IndexSet};
 
 use crate::cli;
 use crate::object;
@@ -386,5 +386,91 @@ fn tree_checkout(
             }
         }
     }
+    Ok(())
+}
+
+fn ref_resolve(repo: &GitRepository, reference: &[&str]) -> io::Result<String> {
+    let path: PathBuf = repo_file(repo, reference, None)?;
+    if !path.is_file() {
+        return Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            "the path to the store reference is empty. Possibility due to this is an new repository with no commits",
+        ));
+    }
+
+    let data: String = fs::read_to_string(path)?;
+    let data = data.trim();
+
+    if let Some(target_path) = data.strip_prefix("ref: ") {
+        let next_ref: Vec<&str> = target_path.split("/").collect();
+        ref_resolve(repo, &next_ref)
+    } else {
+        Ok(data.to_string())
+    }
+}
+
+fn ref_list(repo: &GitRepository, path: Option<PathBuf>) -> io::Result<IndexMap<PathBuf, String>> {
+    let path = path.unwrap_or(repo_dir(repo, &["refs"], None)?);
+
+    let mut ret: IndexMap<PathBuf, String> = IndexMap::new();
+
+    let directory = fs::read_dir(&path)?;
+
+    for content in directory {
+        let entry_path = content?.path();
+        let next: PathBuf = path.join(entry_path);
+        if next.is_dir() {
+            let submap = ref_list(repo, Some(next))?;
+            ret.extend(submap);
+        } else {
+            let rel = next.strip_prefix(repo.get_git_dir()).map_err(|_| {
+                io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "ref path outside of git directory",
+                )
+            })?;
+
+            let hold: Vec<&str> = rel
+                .iter()
+                .map(|s| {
+                    s.to_str().ok_or_else(|| {
+                        io::Error::new(io::ErrorKind::InvalidData, "Invalid UTF-8 in path")
+                    })
+                })
+                .collect::<io::Result<_>>()?;
+
+            let sha = ref_resolve(repo, &hold)?;
+
+            ret.insert(next, sha);
+        }
+    }
+    Ok(ret)
+}
+
+pub fn cmd_show_ref() -> io::Result<()> {
+    let repo = repo_find(None)?;
+    let refs = ref_list(&repo, None)?;
+    show_ref(refs, None, None)
+}
+
+fn show_ref(
+    refs: IndexMap<PathBuf, String>,
+    with_hash: Option<bool>,
+    prefix: Option<String>,
+) -> io::Result<()> {
+    let mut pr = String::new();
+    if let Some(p) = prefix {
+        pr = p + "/";
+    }
+    let with_hash = with_hash.unwrap_or(true);
+
+    for (k, v) in refs.iter() {
+        if with_hash {
+            println!("{} {}{:?}", v, pr, k);
+        } else {
+            println!("{}{:?}", pr, k);
+        }
+    }
+
     Ok(())
 }

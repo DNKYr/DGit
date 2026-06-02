@@ -51,6 +51,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Checkout(args) => {
             repo::cmd_checkout(args)?;
         }
+
+        Commands::ShowRef {} => {
+            repo::cmd_show_ref()?;
+        }
     }
 
     Ok(())
