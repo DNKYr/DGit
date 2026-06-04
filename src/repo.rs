@@ -50,21 +50,18 @@ pub fn repo_dir(repo: &GitRepository, paths: &[&str], mkdir: Option<bool>) -> io
         if path.is_dir() {
             return Ok(path);
         } else {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                "Path exists but is not a directory",
-            ));
+            return Err(io::Error::other("Path exists but is not a directory"));
         }
     }
 
     if mkdir.unwrap_or(false) {
         fs::create_dir_all(&path)?;
-        return Ok(path);
+        Ok(path)
     } else {
-        return Err(io::Error::new(
+        Err(io::Error::new(
             io::ErrorKind::NotFound,
             "Directory does not exist",
-        ));
+        ))
     }
 }
 
@@ -87,7 +84,7 @@ pub fn repo_find(path: Option<&PathBuf>) -> io::Result<GitRepository> {
     let current_directory = env::current_dir()?;
     let path: &Path = path
         .map(|p| p.as_path())
-        .unwrap_or(&current_directory.as_path());
+        .unwrap_or(current_directory.as_path());
 
     let git_dir_path: PathBuf = path.join(".git");
 
@@ -95,16 +92,12 @@ pub fn repo_find(path: Option<&PathBuf>) -> io::Result<GitRepository> {
         return Ok(GitRepository::new(&path.to_path_buf()));
     }
     match path.parent() {
-        None => {
-            return Err(io::Error::new(
-                io::ErrorKind::NotFound,
-                String::from("Not working within a Git repository"),
-            ));
-        }
+        None => Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            String::from("Not working within a Git repository"),
+        )),
 
-        Some(parent_path) => {
-            return repo_find(Some(&parent_path.to_path_buf()));
-        }
+        Some(parent_path) => repo_find(Some(&parent_path.to_path_buf())),
     }
 }
 
@@ -234,7 +227,7 @@ fn ls_tree(
     recursive: bool,
     prefix: Option<Vec<u8>>,
 ) -> io::Result<()> {
-    let prefix = prefix.unwrap_or(Vec::new());
+    let prefix = prefix.unwrap_or_default();
 
     let sha = object::find_object(repo, reference, Some(cli::ObjectMode::Tree), None);
     let obj: object::TreeObject = match object::read_object(repo, &sha)? {

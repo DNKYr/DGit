@@ -166,10 +166,10 @@ pub fn read_object(repo: &repo::GitRepository, sha: &str) -> io::Result<GitObjec
         .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "Invalid size header"))?;
 
     if size != raw.len() - y - 1 {
-        return Err(io::Error::new(
-            io::ErrorKind::Other,
-            format!("Malformed object {}: bad length", sha),
-        ));
+        return Err(io::Error::other(format!(
+            "Malformed object {}: bad length",
+            sha
+        )));
     }
 
     // 4 match the type and handle data
@@ -193,12 +193,10 @@ pub fn read_object(repo: &repo::GitRepository, sha: &str) -> io::Result<GitObjec
         }
         // Unimplemented object reading
         b"tag" => exit(1),
-        _ => {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "Non-existing object type",
-            ));
-        }
+        _ => Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "Non-existing object type",
+        )),
     }
 }
 
@@ -217,7 +215,7 @@ fn kvlm_parse(
     dct: Option<IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>>,
 ) -> io::Result<IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>> {
     let start = start.unwrap_or(0);
-    let mut dct = dct.unwrap_or(IndexMap::new());
+    let mut dct = dct.unwrap_or_default();
 
     let spc: Option<usize> = raw[start..]
         .iter()
@@ -268,7 +266,7 @@ fn kvlm_parse(
 
     dct.entry(Some(key)).or_insert_with(Vec::new).push(value);
 
-    return kvlm_parse(raw, Some(end + 1), Some(dct));
+    kvlm_parse(raw, Some(end + 1), Some(dct))
 }
 
 fn kvlm_serialize(kvlm: &IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>) -> Vec<u8> {
