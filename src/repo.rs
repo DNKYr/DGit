@@ -467,3 +467,43 @@ fn show_ref(
 
     Ok(())
 }
+
+pub fn cmd_tag(args: &cli::TagArgs) -> io::Result<()> {
+    let repo = repo_find(None)?;
+
+    if let Some(name) = &args.name {
+        tag_create(&repo, name, &args.object, Some(args.add))
+    } else {
+        let refs = ref_list(&repo, None)?;
+        let prefix: String = refs
+            .get(&repo.get_git_dir())
+            .ok_or_else(|| {
+                io::Error::new(
+                    io::ErrorKind::NotFound,
+                    "Cannot find refs directory in .git directory",
+                )
+            })?
+            .clone();
+        show_ref(refs, Some(false), Some(prefix))
+    }
+}
+
+fn tag_create(
+    repo: &GitRepository,
+    name: &String,
+    refs: &String,
+    create_tag_object: Option<bool>,
+) -> io::Result<()> {
+    let create_tag_object = create_tag_object.unwrap_or(false);
+
+    let sha = object::find_object(repo, name, None, None);
+
+    ref_create(repo, &["refs", "tags", name.as_str()], &sha)
+}
+
+fn ref_create(repo: &GitRepository, ref_name: &[&str], sha: &String) -> io::Result<()> {
+    let path = repo_file(repo, ref_name, None)?;
+
+    fs::write(path, format!("{}\n", sha));
+    Ok(())
+}

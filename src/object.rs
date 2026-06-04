@@ -18,7 +18,7 @@ use std::{
 pub enum GitObject {
     Blob(BlobObject),
     Commit(CommitObject),
-    Tag(Vec<u8>),
+    Tag(CommitObject),
     Tree(TreeObject),
 }
 

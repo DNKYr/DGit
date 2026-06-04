@@ -31,6 +31,9 @@ pub enum Commands {
 
     /// List references
     ShowRef {},
+
+    /// List and create tags
+    Tag(TagArgs),
 }
 
 #[derive(Args)]
@@ -102,4 +105,18 @@ pub struct CheckoutArgs {
 
     /// The EMPTY directory to checkout on
     pub path: String,
+}
+
+#[derive(Args)]
+pub struct TagArgs {
+    /// Whether to create a tag object
+    #[arg(short)]
+    pub add: bool,
+
+    /// The new tag's name
+    pub name: Option<String>,
+
+    /// The object the new tag will point to
+    #[arg(default_value_t = String::from("HEAD"))]
+    pub object: String,
 }

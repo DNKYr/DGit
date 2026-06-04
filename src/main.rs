@@ -55,6 +55,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::ShowRef {} => {
             repo::cmd_show_ref()?;
         }
+
+        Commands::Tag(args) => {
+            repo::cmd_tag(&args)?;
+        }
     }
 
     Ok(())
