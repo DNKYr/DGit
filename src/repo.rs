@@ -103,10 +103,11 @@ pub fn repo_find(path: Option<&PathBuf>) -> io::Result<GitRepository> {
 
 pub fn cmd_cat_file(args: &cli::CatFileArgs) -> io::Result<()> {
     let repo: GitRepository = repo_find(None)?;
-    cat_file(&repo, &args.object, Some(args.mode))
+    let object_kind: object::ObjectKind = object::ObjectKind::new(args.mode);
+    cat_file(&repo, &args.object, Some(object_kind))
 }
 
-fn cat_file(repo: &GitRepository, obj: &String, fmt: Option<cli::ObjectMode>) -> io::Result<()> {
+fn cat_file(repo: &GitRepository, obj: &String, fmt: Option<object::ObjectKind>) -> io::Result<()> {
     let obj: GitObject =
         object::read_object(repo, &object::find_object(&repo, obj, fmt, None).as_str())?;
     let mut stdout = io::stdout().lock();
@@ -229,7 +230,7 @@ fn ls_tree(
 ) -> io::Result<()> {
     let prefix = prefix.unwrap_or_default();
 
-    let sha = object::find_object(repo, reference, Some(cli::ObjectMode::Tree), None);
+    let sha = object::find_object(repo, reference, Some(object::ObjectKind::Tree), None);
     let obj: object::TreeObject = match object::read_object(repo, &sha)? {
         GitObject::Tree(tree) => tree,
         _ => {
@@ -308,7 +309,7 @@ pub fn cmd_checkout(args: &cli::CheckoutArgs) -> io::Result<()> {
         fs::create_dir(&path)?;
     }
 
-    let sha = object::find_object(&repo, &args.commit, Some(cli::ObjectMode::Tree), None);
+    let sha = object::find_object(&repo, &args.commit, Some(object::ObjectKind::Tree), None);
     let obj: object::TreeObject = match object::read_object(&repo, &sha)? {
         GitObject::Tree(tree) => tree,
         GitObject::Commit(tree) => {
