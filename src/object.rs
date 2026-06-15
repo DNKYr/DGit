@@ -12,7 +12,6 @@ use std::{
     fs::{self, File},
     io::{self, Read, Write},
     path::PathBuf,
-    process::exit,
 };
 
 pub enum ObjectKind {
@@ -209,7 +208,10 @@ pub fn read_object(repo: &repo::GitRepository, sha: &str) -> io::Result<GitObjec
             Ok(GitObject::Tree(tree))
         }
         // Unimplemented object reading
-        b"tag" => exit(1),
+        b"tag" => Err(io::Error::new(
+            io::ErrorKind::Unsupported,
+            "tag object isn't supported yet to read",
+        )),
         _ => Err(io::Error::new(
             io::ErrorKind::InvalidData,
             "Non-existing object type",

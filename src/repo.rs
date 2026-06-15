@@ -136,7 +136,10 @@ fn hash_object(
     let obj: GitObject = match fmt {
         cli::HashObjectType::Blob => object::GitObject::Blob(object::BlobObject::new(data)),
         _ => {
-            unimplemented!("other three objects type");
+            return Err(io::Error::new(
+                io::ErrorKind::Unsupported,
+                "This object type isn't supported yet",
+            ));
         }
     };
 
