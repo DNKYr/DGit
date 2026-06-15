@@ -1,6 +1,6 @@
 use crate::{
     cli,
-    repo::{self, GitRepository},
+    repository::{self, GitRepository},
 };
 
 use flate2::Compression;
@@ -59,7 +59,7 @@ pub struct TreeLeaf {
 }
 
 impl GitObject {
-    pub fn write(&self, repo: Option<&repo::GitRepository>) -> io::Result<String> {
+    pub fn write(&self, repo: Option<&repository::GitRepository>) -> io::Result<String> {
         // serialize the data
         let data = self.serialize()?;
 
@@ -81,7 +81,7 @@ impl GitObject {
         let sha = hex::encode(hasher.finalize());
 
         if let Some(r) = repo {
-            let path = repo::repo_file(&r, &["objects", &sha[0..2], &sha[2..]], true)?;
+            let path = repository::repo_file(&r, &["objects", &sha[0..2], &sha[2..]], true)?;
 
             if !path.exists() {
                 let file = fs::File::create(path)?;
@@ -148,8 +148,8 @@ impl TreeLeaf {
     }
 }
 
-pub fn read_object(repo: &repo::GitRepository, sha: &str) -> io::Result<GitObject> {
-    let path: PathBuf = repo::repo_file(repo, &["objects", &sha[0..2], &sha[2..]], false)?;
+pub fn read_object(repo: &repository::GitRepository, sha: &str) -> io::Result<GitObject> {
+    let path: PathBuf = repository::repo_file(repo, &["objects", &sha[0..2], &sha[2..]], false)?;
     if !path.is_file() {
         return Err(io::Error::new(io::ErrorKind::NotFound, "Object not found"));
     }
