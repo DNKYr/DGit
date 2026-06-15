@@ -82,8 +82,7 @@ impl GitObject {
         let sha = hex::encode(hasher.finalize());
 
         if let Some(r) = repo {
-            let path =
-                repo::repo_file(&r, &["objects", &sha[0..2], &sha[2..]], Option::from(true))?;
+            let path = repo::repo_file(&r, &["objects", &sha[0..2], &sha[2..]], true)?;
 
             if !path.exists() {
                 let file = fs::File::create(path)?;
@@ -151,7 +150,7 @@ impl TreeLeaf {
 }
 
 pub fn read_object(repo: &repo::GitRepository, sha: &str) -> io::Result<GitObject> {
-    let path: PathBuf = repo::repo_file(repo, &["objects", &sha[0..2], &sha[2..]], None)?;
+    let path: PathBuf = repo::repo_file(repo, &["objects", &sha[0..2], &sha[2..]], false)?;
     if !path.is_file() {
         return Err(io::Error::new(io::ErrorKind::NotFound, "Object not found"));
     }
@@ -222,7 +221,7 @@ pub fn find_object(
     repo: &GitRepository,
     name: &str,
     fmt: Option<ObjectKind>,
-    follow: Option<bool>,
+    follow: bool,
 ) -> String {
     name.to_string()
 }

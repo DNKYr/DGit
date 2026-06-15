@@ -36,14 +36,14 @@ pub fn repo_path(repo: &GitRepository, paths: &[&str]) -> PathBuf {
     result
 }
 
-pub fn repo_file(repo: &GitRepository, paths: &[&str], mkdir: Option<bool>) -> io::Result<PathBuf> {
+pub fn repo_file(repo: &GitRepository, paths: &[&str], mkdir: bool) -> io::Result<PathBuf> {
     if paths.len() > 1 {
         let _ = repo_dir(repo, &paths[..paths.len() - 1], mkdir)?;
     }
     Ok(repo_path(repo, paths))
 }
 
-pub fn repo_dir(repo: &GitRepository, paths: &[&str], mkdir: Option<bool>) -> io::Result<PathBuf> {
+pub fn repo_dir(repo: &GitRepository, paths: &[&str], mkdir: bool) -> io::Result<PathBuf> {
     let path = repo_path(repo, paths);
 
     if path.exists() {
@@ -54,7 +54,7 @@ pub fn repo_dir(repo: &GitRepository, paths: &[&str], mkdir: Option<bool>) -> io
         }
     }
 
-    if mkdir.unwrap_or(false) {
+    if mkdir {
         fs::create_dir_all(&path)?;
         Ok(path)
     } else {
@@ -107,7 +107,7 @@ pub fn cmd_cat_file(args: &cli::CatFileArgs) -> io::Result<()> {
 
 fn cat_file(repo: &GitRepository, obj: &str, fmt: Option<object::ObjectKind>) -> io::Result<()> {
     let obj: GitObject =
-        object::read_object(repo, &object::find_object(&repo, obj, fmt, None).as_str())?;
+        object::read_object(repo, &object::find_object(&repo, obj, fmt, false).as_str())?;
     let mut stdout = io::stdout().lock();
     stdout.write_all(&obj.serialize()?)?;
     Ok(())
@@ -228,7 +228,7 @@ fn ls_tree(
 ) -> io::Result<()> {
     let prefix = prefix.unwrap_or_default();
 
-    let sha = object::find_object(repo, reference, Some(object::ObjectKind::Tree), None);
+    let sha = object::find_object(repo, reference, Some(object::ObjectKind::Tree), false);
     let obj: object::TreeObject = match object::read_object(repo, &sha)? {
         GitObject::Tree(tree) => tree,
         _ => {
@@ -307,7 +307,7 @@ pub fn cmd_checkout(args: &cli::CheckoutArgs) -> io::Result<()> {
         fs::create_dir(&path)?;
     }
 
-    let sha = object::find_object(&repo, &args.commit, Some(object::ObjectKind::Tree), None);
+    let sha = object::find_object(&repo, &args.commit, Some(object::ObjectKind::Tree), false);
     let obj: object::TreeObject = match object::read_object(&repo, &sha)? {
         GitObject::Tree(tree) => tree,
         GitObject::Commit(tree) => {
@@ -378,7 +378,7 @@ fn tree_checkout(repo: &GitRepository, tree: &object::TreeObject, path: &Path) -
 }
 
 fn ref_resolve(repo: &GitRepository, reference: &[&str]) -> io::Result<String> {
-    let path: PathBuf = repo_file(repo, reference, None)?;
+    let path: PathBuf = repo_file(repo, reference, false)?;
     if !path.is_file() {
         return Err(io::Error::new(
             io::ErrorKind::NotFound,
@@ -398,7 +398,7 @@ fn ref_resolve(repo: &GitRepository, reference: &[&str]) -> io::Result<String> {
 }
 
 fn ref_list(repo: &GitRepository, path: Option<PathBuf>) -> io::Result<IndexMap<PathBuf, String>> {
-    let path = path.unwrap_or(repo_dir(repo, &["refs"], None)?);
+    let path = path.unwrap_or(repo_dir(repo, &["refs"], false)?);
 
     let mut ret: IndexMap<PathBuf, String> = IndexMap::new();
 
@@ -438,19 +438,18 @@ fn ref_list(repo: &GitRepository, path: Option<PathBuf>) -> io::Result<IndexMap<
 pub fn cmd_show_ref() -> io::Result<()> {
     let repo = repo_find(None)?;
     let refs = ref_list(&repo, None)?;
-    show_ref(refs, None, None)
+    show_ref(refs, true, None)
 }
 
 fn show_ref(
     refs: IndexMap<PathBuf, String>,
-    with_hash: Option<bool>,
+    with_hash: bool,
     prefix: Option<String>,
 ) -> io::Result<()> {
     let mut pr = String::new();
     if let Some(p) = prefix {
         pr = p + "/";
     }
-    let with_hash = with_hash.unwrap_or(true);
 
     for (k, v) in refs.iter() {
         if with_hash {
@@ -467,7 +466,7 @@ pub fn cmd_tag(args: &cli::TagArgs) -> io::Result<()> {
     let repo = repo_find(None)?;
 
     if let Some(name) = &args.name {
-        tag_create(&repo, name, &args.object, Some(args.add))
+        tag_create(&repo, name, &args.object, args.add)
     } else {
         let refs = ref_list(&repo, None)?;
         let prefix: String = refs
@@ -479,7 +478,7 @@ pub fn cmd_tag(args: &cli::TagArgs) -> io::Result<()> {
                 )
             })?
             .clone();
-        show_ref(refs, Some(false), Some(prefix))
+        show_ref(refs, false, Some(prefix))
     }
 }
 
@@ -487,17 +486,15 @@ fn tag_create(
     repo: &GitRepository,
     name: &str,
     refs: &str,
-    create_tag_object: Option<bool>,
+    create_tag_object: bool,
 ) -> io::Result<()> {
-    let create_tag_object = create_tag_object.unwrap_or(false);
-
-    let sha = object::find_object(repo, name, None, None);
+    let sha = object::find_object(repo, name, None, false);
 
     ref_create(repo, &["refs", "tags", name], &sha)
 }
 
 fn ref_create(repo: &GitRepository, ref_name: &[&str], sha: &str) -> io::Result<()> {
-    let path = repo_file(repo, ref_name, None)?;
+    let path = repo_file(repo, ref_name, false)?;
 
     fs::write(path, format!("{}\n", sha));
     Ok(())
