@@ -15,6 +15,24 @@ use std::{
     process::exit,
 };
 
+pub enum ObjectKind {
+    Blob,
+    Commit,
+    Tag,
+    Tree,
+}
+
+impl ObjectKind {
+    pub fn new(types: cli::ObjectMode) -> Self {
+        match types {
+            cli::ObjectMode::Blob => ObjectKind::Blob,
+            cli::ObjectMode::Commit => ObjectKind::Commit,
+            cli::ObjectMode::Tree => ObjectKind::Tree,
+            cli::ObjectMode::Tag => ObjectKind::Tag,
+        }
+    }
+}
+
 pub enum GitObject {
     Blob(BlobObject),
     Commit(CommitObject),
@@ -203,7 +221,7 @@ pub fn read_object(repo: &repo::GitRepository, sha: &str) -> io::Result<GitObjec
 pub fn find_object(
     repo: &GitRepository,
     name: &String,
-    fmt: Option<cli::ObjectMode>,
+    fmt: Option<ObjectKind>,
     follow: Option<bool>,
 ) -> String {
     name.clone()
