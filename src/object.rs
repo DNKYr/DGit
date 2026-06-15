@@ -139,7 +139,7 @@ impl TreeObject {
         Self { items }
     }
 
-    pub fn get_items(&self) -> &Vec<TreeLeaf> {
+    pub fn get_items(&self) -> &[TreeLeaf] {
         &self.items
     }
 }
@@ -220,15 +220,15 @@ pub fn read_object(repo: &repo::GitRepository, sha: &str) -> io::Result<GitObjec
 
 pub fn find_object(
     repo: &GitRepository,
-    name: &String,
+    name: &str,
     fmt: Option<ObjectKind>,
     follow: Option<bool>,
 ) -> String {
-    name.clone()
+    name.to_string()
 }
 
 fn kvlm_parse(
-    raw: &Vec<u8>,
+    raw: &[u8],
     start: Option<usize>,
     dct: Option<IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>>,
 ) -> io::Result<IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>> {
@@ -320,7 +320,7 @@ fn kvlm_serialize(kvlm: &IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>) -> Vec<u8> {
     ret
 }
 
-fn tree_parse_one(raw: &Vec<u8>, start: Option<usize>) -> io::Result<(usize, TreeLeaf)> {
+fn tree_parse_one(raw: &[u8], start: Option<usize>) -> io::Result<(usize, TreeLeaf)> {
     // GitTree format: <mode> space <path> 0x00 <sha1>
 
     let start = start.unwrap_or(0);
@@ -377,7 +377,7 @@ fn tree_parse_one(raw: &Vec<u8>, start: Option<usize>) -> io::Result<(usize, Tre
     Ok((sha_end, TreeLeaf::new(mode, path, sha)))
 }
 
-pub fn tree_parse(raw: &Vec<u8>) -> io::Result<Vec<TreeLeaf>> {
+pub fn tree_parse(raw: &[u8]) -> io::Result<Vec<TreeLeaf>> {
     let len = raw.len();
     let mut pos = 0;
     let mut ret: Vec<TreeLeaf> = Vec::new();
@@ -391,7 +391,7 @@ pub fn tree_parse(raw: &Vec<u8>) -> io::Result<Vec<TreeLeaf>> {
     Ok(ret)
 }
 
-pub fn tree_serialize(obj: &Vec<TreeLeaf>) -> Vec<u8> {
+pub fn tree_serialize(obj: &[TreeLeaf]) -> Vec<u8> {
     let mut sorted_obj: Vec<TreeLeaf> = obj.to_vec();
 
     sorted_obj.sort_by(|a: &TreeLeaf, b: &TreeLeaf| {
