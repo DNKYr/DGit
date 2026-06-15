@@ -15,10 +15,10 @@ pub struct GitRepository {
 }
 
 impl GitRepository {
-    pub fn new(path: &PathBuf) -> Self {
+    pub fn new(path: &Path) -> Self {
         Self {
-            worktree: path.clone(),
-            git_dir: path.clone().join(".git"),
+            worktree: path.to_owned().clone(),
+            git_dir: path.join(".git"),
         }
     }
 
@@ -65,7 +65,7 @@ pub fn repo_dir(repo: &GitRepository, paths: &[&str], mkdir: Option<bool>) -> io
     }
 }
 
-pub fn repo_create(path: &PathBuf) -> io::Result<String> {
+pub fn repo_create(path: &Path) -> io::Result<String> {
     let repo: GitRepository = GitRepository::new(path);
     let git_dir_path: PathBuf = repo_path(&repo, &[]);
     let head_file_path: PathBuf = repo_path(&repo, &["HEAD"]);
@@ -80,16 +80,14 @@ pub fn repo_create(path: &PathBuf) -> io::Result<String> {
     Ok(String::from("Initialized empty DGit repository"))
 }
 
-pub fn repo_find(path: Option<&PathBuf>) -> io::Result<GitRepository> {
+pub fn repo_find(path: Option<&Path>) -> io::Result<GitRepository> {
     let current_directory = env::current_dir()?;
-    let path: &Path = path
-        .map(|p| p.as_path())
-        .unwrap_or(current_directory.as_path());
+    let path: &Path = path.unwrap_or(current_directory.as_path());
 
     let git_dir_path: PathBuf = path.join(".git");
 
     if git_dir_path.exists() {
-        return Ok(GitRepository::new(&path.to_path_buf()));
+        return Ok(GitRepository::new(path));
     }
     match path.parent() {
         None => Err(io::Error::new(
@@ -97,7 +95,7 @@ pub fn repo_find(path: Option<&PathBuf>) -> io::Result<GitRepository> {
             String::from("Not working within a Git repository"),
         )),
 
-        Some(parent_path) => repo_find(Some(&parent_path.to_path_buf())),
+        Some(parent_path) => repo_find(Some(parent_path)),
     }
 }
 
@@ -107,7 +105,7 @@ pub fn cmd_cat_file(args: &cli::CatFileArgs) -> io::Result<()> {
     cat_file(&repo, &args.object, Some(object_kind))
 }
 
-fn cat_file(repo: &GitRepository, obj: &String, fmt: Option<object::ObjectKind>) -> io::Result<()> {
+fn cat_file(repo: &GitRepository, obj: &str, fmt: Option<object::ObjectKind>) -> io::Result<()> {
     let obj: GitObject =
         object::read_object(repo, &object::find_object(&repo, obj, fmt, None).as_str())?;
     let mut stdout = io::stdout().lock();
@@ -130,7 +128,7 @@ pub fn cmd_hash_object(args: &cli::HashObjectArgs) -> io::Result<()> {
 }
 
 fn hash_object(
-    file_path: &PathBuf,
+    file_path: &Path,
     fmt: &cli::HashObjectType,
     repo: Option<&GitRepository>,
 ) -> io::Result<String> {
@@ -224,7 +222,7 @@ pub fn cmd_ls_tree(args: &cli::LsTreeArgs) -> io::Result<()> {
 
 fn ls_tree(
     repo: &GitRepository,
-    reference: &String,
+    reference: &str,
     recursive: bool,
     prefix: Option<Vec<u8>>,
 ) -> io::Result<()> {
@@ -347,11 +345,7 @@ pub fn cmd_checkout(args: &cli::CheckoutArgs) -> io::Result<()> {
     tree_checkout(&repo, &obj, &path)
 }
 
-fn tree_checkout(
-    repo: &GitRepository,
-    tree: &object::TreeObject,
-    path: &PathBuf,
-) -> io::Result<()> {
+fn tree_checkout(repo: &GitRepository, tree: &object::TreeObject, path: &Path) -> io::Result<()> {
     for item in tree.get_items() {
         let sha_hex = &item
             .sha
@@ -491,18 +485,18 @@ pub fn cmd_tag(args: &cli::TagArgs) -> io::Result<()> {
 
 fn tag_create(
     repo: &GitRepository,
-    name: &String,
-    refs: &String,
+    name: &str,
+    refs: &str,
     create_tag_object: Option<bool>,
 ) -> io::Result<()> {
     let create_tag_object = create_tag_object.unwrap_or(false);
 
     let sha = object::find_object(repo, name, None, None);
 
-    ref_create(repo, &["refs", "tags", name.as_str()], &sha)
+    ref_create(repo, &["refs", "tags", name], &sha)
 }
 
-fn ref_create(repo: &GitRepository, ref_name: &[&str], sha: &String) -> io::Result<()> {
+fn ref_create(repo: &GitRepository, ref_name: &[&str], sha: &str) -> io::Result<()> {
     let path = repo_file(repo, ref_name, None)?;
 
     fs::write(path, format!("{}\n", sha));
