@@ -1,7 +1,10 @@
 mod cli;
+mod commands;
 mod object;
-mod repo;
+mod refs;
+mod repository;
 
+use crate::commands::{cat_file, checkout, hash_object, init, log, ls_tree, show_ref, tag};
 use clap::Parser;
 use cli::{Cli, Commands};
 use std::env;
@@ -15,14 +18,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     match &cli.command {
         Commands::Init(args) => {
             if let Some(p) = &args.path {
-                let msg = repo::repo_create(&std::path::PathBuf::from(p))?;
+                let msg = init::init(&std::path::PathBuf::from(p))?;
                 println!("{msg}");
             } else {
-                let msg = repo::repo_create(&current_directory_path)?;
+                let msg = init::init(&current_directory_path)?;
                 println!("{msg}");
             }
         }
-        Commands::Status {} => match repo::repo_find(Some(&current_directory_path)) {
+        Commands::Status {} => match repository::repo_find(Some(&current_directory_path)) {
             Ok(repo) => {
                 println!("{:?}", repo.get_git_dir().display());
             }
@@ -33,31 +36,31 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         },
         Commands::CatFile(args) => {
-            repo::cmd_cat_file(args)?;
+            cat_file::cmd_cat_file(args)?;
         }
 
         Commands::HashObject(args) => {
-            repo::cmd_hash_object(args)?;
+            hash_object::cmd_hash_object(args)?;
         }
 
         Commands::Log(args) => {
-            repo::cmd_log(args)?;
+            log::cmd_log(args)?;
         }
 
         Commands::LsTree(args) => {
-            repo::cmd_ls_tree(args)?;
+            ls_tree::cmd_ls_tree(args)?;
         }
 
         Commands::Checkout(args) => {
-            repo::cmd_checkout(args)?;
+            checkout::cmd_checkout(args)?;
         }
 
         Commands::ShowRef {} => {
-            repo::cmd_show_ref()?;
+            show_ref::cmd_show_ref()?;
         }
 
         Commands::Tag(args) => {
-            repo::cmd_tag(&args)?;
+            tag::cmd_tag(&args)?;
         }
     }
 
