@@ -1,7 +1,7 @@
-use crate::{
-    cli,
-    repository::{self, GitRepository},
-};
+mod kind;
+use crate::repository::{self, GitRepository};
+
+pub use kind::ObjectKind;
 
 use flate2::Compression;
 use flate2::read::ZlibDecoder;
@@ -13,24 +13,6 @@ use std::{
     io::{self, Read, Write},
     path::PathBuf,
 };
-
-pub enum ObjectKind {
-    Blob,
-    Commit,
-    Tag,
-    Tree,
-}
-
-impl ObjectKind {
-    pub fn new(types: cli::ObjectMode) -> Self {
-        match types {
-            cli::ObjectMode::Blob => ObjectKind::Blob,
-            cli::ObjectMode::Commit => ObjectKind::Commit,
-            cli::ObjectMode::Tree => ObjectKind::Tree,
-            cli::ObjectMode::Tag => ObjectKind::Tag,
-        }
-    }
-}
 
 pub enum GitObject {
     Blob(BlobObject),
