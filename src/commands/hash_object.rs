@@ -1,5 +1,5 @@
 use crate::cli;
-use crate::object::{self, GitObject};
+use crate::object::{self, GitObject, write_object};
 use crate::repository::{GitRepository, repo_find};
 use std::fs;
 use std::io;
@@ -35,5 +35,5 @@ fn hash_object(
         }
     };
 
-    obj.write(repo)
+    write_object(&obj, repo)
 }
