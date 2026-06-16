@@ -21,12 +21,12 @@ pub enum GitObject {
 }
 
 impl GitObject {
-    fn format(&self) -> &str {
+    fn kind(&self) -> &ObjectKind {
         match self {
-            GitObject::Blob(_) => "blob",
-            GitObject::Commit(_) => "commit",
-            GitObject::Tag(_) => "tag",
-            GitObject::Tree(_) => "tree",
+            GitObject::Blob(_) => &ObjectKind::Blob,
+            GitObject::Commit(_) => &ObjectKind::Commit,
+            GitObject::Tag(_) => &ObjectKind::Tag,
+            GitObject::Tree(_) => &ObjectKind::Tree,
         }
     }
 
