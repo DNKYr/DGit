@@ -1,13 +1,14 @@
 mod blob;
 mod commit;
 mod kind;
+mod lookup;
 mod store;
 mod tree;
-use crate::repository::GitRepository;
 
 pub use blob::BlobObject;
 pub use commit::{CommitObject, kvlm_parse, kvlm_serialize};
 pub use kind::ObjectKind;
+pub use lookup::find_object;
 use std::io;
 pub use store::{read_object, write_object};
 pub use tree::{TreeObject, tree_parse, tree_serialize};
@@ -40,13 +41,4 @@ impl GitObject {
             )),
         }
     }
-}
-
-pub fn find_object(
-    repo: &GitRepository,
-    name: &str,
-    fmt: Option<ObjectKind>,
-    follow: bool,
-) -> String {
-    name.to_string()
 }

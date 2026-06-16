@@ -3,8 +3,7 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 use crate::cli;
-use crate::object;
-use crate::object::GitObject;
+use crate::object::{self, GitObject, find_object};
 use crate::repository::{GitRepository, repo_find};
 
 pub fn cmd_checkout(args: &cli::CheckoutArgs) -> io::Result<()> {
@@ -29,7 +28,7 @@ pub fn cmd_checkout(args: &cli::CheckoutArgs) -> io::Result<()> {
         fs::create_dir(&path)?;
     }
 
-    let sha = object::find_object(&repo, &args.commit, Some(object::ObjectKind::Tree), false);
+    let sha = find_object(&repo, &args.commit, Some(object::ObjectKind::Tree), false);
     let obj: object::TreeObject = match object::read_object(&repo, &sha)? {
         GitObject::Tree(tree) => tree,
         GitObject::Commit(tree) => {
