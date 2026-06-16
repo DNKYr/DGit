@@ -21,7 +21,7 @@ pub enum GitObject {
 }
 
 impl GitObject {
-    fn get_format(&self) -> &str {
+    fn format(&self) -> &str {
         match self {
             GitObject::Blob(_) => "blob",
             GitObject::Commit(_) => "commit",

@@ -1,5 +1,3 @@
-use crate::cli;
-
 pub enum ObjectKind {
     Blob,
     Commit,
@@ -8,12 +6,12 @@ pub enum ObjectKind {
 }
 
 impl ObjectKind {
-    pub fn new(types: cli::ObjectMode) -> Self {
-        match types {
-            cli::ObjectMode::Blob => ObjectKind::Blob,
-            cli::ObjectMode::Commit => ObjectKind::Commit,
-            cli::ObjectMode::Tree => ObjectKind::Tree,
-            cli::ObjectMode::Tag => ObjectKind::Tag,
+    pub fn as_str(&self) -> &str {
+        match self {
+            ObjectKind::Blob => "Blob",
+            ObjectKind::Commit => "Commit",
+            ObjectKind::Tree => "Tree",
+            ObjectKind::Tag => "Tag",
         }
     }
 }

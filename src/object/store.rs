@@ -88,7 +88,7 @@ pub fn write_object(
     let data = object.serialize()?;
 
     // Handle fmt and size
-    let fmt_bytes = object.get_format().as_bytes();
+    let fmt_bytes = object.format().as_bytes();
     let size_bytes = data.len().to_string().into_bytes();
 
     // Construct the <fmt> <size>\0<data>
