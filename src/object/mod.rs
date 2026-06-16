@@ -1,6 +1,8 @@
+mod blob;
 mod kind;
 use crate::repository::{self, GitRepository};
 
+pub use blob::BlobObject;
 pub use kind::ObjectKind;
 
 use flate2::Compression;
@@ -19,10 +21,6 @@ pub enum GitObject {
     Commit(CommitObject),
     Tag(CommitObject),
     Tree(TreeObject),
-}
-
-pub struct BlobObject {
-    pub data: Vec<u8>,
 }
 
 pub struct CommitObject {
@@ -95,12 +93,6 @@ impl GitObject {
                 "Unimplemented/Not existing object type",
             )),
         }
-    }
-}
-
-impl BlobObject {
-    pub fn new(data: Vec<u8>) -> Self {
-        Self { data }
     }
 }
 
