@@ -1,9 +1,10 @@
 use std::io;
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct TreeObject {
     pub items: Vec<TreeLeaf>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct TreeLeaf {
     pub mode: Vec<u8>,
     pub path: Vec<u8>,
@@ -101,12 +102,12 @@ pub fn tree_serialize(obj: &[TreeLeaf]) -> Vec<u8> {
 
     sorted_obj.sort_by(|a: &TreeLeaf, b: &TreeLeaf| {
         let mut name_a = a.path.to_vec();
-        if a.mode.starts_with(&[b'4']) {
+        if a.mode.starts_with(b"4") {
             name_a.push(b'/');
         }
 
         let mut name_b = b.path.to_vec();
-        if b.mode.starts_with(&[b'4']) {
+        if b.mode.starts_with(b"4") {
             name_b.push(b'/');
         }
 
@@ -123,4 +124,184 @@ pub fn tree_serialize(obj: &[TreeLeaf]) -> Vec<u8> {
         ret.extend(i.sha);
     }
     ret
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_regular_file_tree_entry() {
+        let mut raw = Vec::new();
+        raw.extend_from_slice(b"100644 hello.txt\0");
+        raw.extend_from_slice(&[1u8; 20]);
+
+        let entries = tree_parse(&raw).unwrap();
+        assert_eq!(entries.len(), 1);
+        assert_eq!(
+            entries[0],
+            TreeLeaf::new(b"100644".to_vec(), b"hello.txt".to_vec(), vec![1u8; 20])
+        );
+    }
+
+    #[test]
+    fn parse_directory_tree_entry() {
+        let mut raw: Vec<u8> = Vec::new();
+        raw.extend_from_slice(b"40000 src\0");
+        raw.extend_from_slice(&[9u8; 20]);
+
+        let entries = tree_parse(&raw).unwrap();
+
+        assert_eq!(entries.len(), 1);
+        assert_eq!(
+            entries[0],
+            TreeLeaf::new(b"40000".to_vec(), b"src".to_vec(), vec![9u8; 20])
+        );
+    }
+
+    #[test]
+    fn parse_multiple_tree_entry() {
+        let mut raw = Vec::new();
+        raw.extend_from_slice(b"100644 hello.txt\0");
+        raw.extend_from_slice(&[1u8; 20]);
+
+        raw.extend_from_slice(b"100644 hello.cpp\0");
+        raw.extend_from_slice(&[2u8; 20]);
+
+        raw.extend_from_slice(b"40000 hello_src\0");
+        raw.extend_from_slice(&[4u8; 20]);
+
+        let entries = tree_parse(&raw).unwrap();
+
+        assert_eq!(entries.len(), 3);
+        assert_eq!(
+            entries[0],
+            TreeLeaf::new(b"100644".to_vec(), b"hello.txt".to_vec(), vec![1u8; 20])
+        );
+        assert_eq!(
+            entries[1],
+            TreeLeaf::new(b"100644".to_vec(), b"hello.cpp".to_vec(), vec![2u8; 20])
+        );
+        assert_eq!(
+            entries[2],
+            TreeLeaf::new(b"40000".to_vec(), b"hello_src".to_vec(), vec![4u8; 20])
+        );
+    }
+
+    #[test]
+    fn parse_tree_entry_error_catching() {
+        // Test case with invalid mode
+        let mut panic_raw = Vec::new();
+        panic_raw.extend_from_slice(b"1111 wrong_mode.err\0");
+        panic_raw.extend_from_slice(&[1u8; 20]);
+
+        let err = tree_parse(&panic_raw).unwrap_err();
+        assert_eq!(err.kind(), io::ErrorKind::InvalidData);
+
+        // Test case without the zero bytes
+        let mut panic_raw = Vec::new();
+        panic_raw.extend_from_slice(b"100644 hello.txt");
+        panic_raw.extend_from_slice(&[1u8; 20]);
+
+        let err = tree_parse(&panic_raw).unwrap_err();
+        assert_eq!(err.kind(), io::ErrorKind::InvalidData);
+    }
+
+    #[test]
+    fn rejects_truncated_sha() {
+        let mut raw = Vec::new();
+        raw.extend_from_slice(b"100644 hello.txt\0");
+        raw.extend_from_slice(&[1u8; 19]);
+
+        let err = tree_parse(&raw).unwrap_err();
+        assert_eq!(err.kind(), io::ErrorKind::UnexpectedEof);
+    }
+
+    #[test]
+    fn serializes_tree_entry() {
+        let entry = TreeLeaf::new(b"100644".to_vec(), b"hello.txt".to_vec(), vec![1u8; 20]);
+
+        let raw = tree_serialize(&[entry]);
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(b"100644 hello.txt\0");
+        expected.extend_from_slice(&[1u8; 20]);
+
+        assert_eq!(raw, expected);
+    }
+
+    #[test]
+    fn sorting_in_tree_serialize() {
+        let entries = [
+            TreeLeaf::new(b"100644".to_vec(), b"hello.txt".to_vec(), vec![1u8; 20]),
+            TreeLeaf::new(b"100644".to_vec(), b"hello.cpp".to_vec(), vec![2u8; 20]),
+            TreeLeaf::new(b"40000".to_vec(), b"hello_src".to_vec(), vec![4u8; 20]),
+        ];
+
+        let raw = tree_serialize(&entries);
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(b"100644 hello.cpp\0");
+        expected.extend_from_slice(&[2u8; 20]);
+        expected.extend_from_slice(b"100644 hello.txt\0");
+        expected.extend_from_slice(&[1u8; 20]);
+        expected.extend_from_slice(b"40000 hello_src\0");
+        expected.extend_from_slice(&[4u8; 20]);
+
+        assert_eq!(raw, expected);
+    }
+
+    #[test]
+    fn sorts_directories_with_trailing_slash_semantics() {
+        let entries = [
+            TreeLeaf::new(b"100644".to_vec(), b"foo.txt".to_vec(), vec![1u8; 20]),
+            TreeLeaf::new(b"40000".to_vec(), b"foo".to_vec(), vec![2u8; 20]),
+            TreeLeaf::new(b"100644".to_vec(), b"foo".to_vec(), vec![3u8; 20]),
+        ];
+
+        let raw = tree_serialize(&entries);
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(b"100644 foo\0");
+        expected.extend_from_slice(&[3u8; 20]);
+        expected.extend_from_slice(b"100644 foo.txt\0");
+        expected.extend_from_slice(&[1u8; 20]);
+        expected.extend_from_slice(b"40000 foo\0");
+        expected.extend_from_slice(&[2u8; 20]);
+
+        assert_eq!(raw, expected);
+    }
+
+    #[test]
+    fn parse_then_serialize_round_trip_tree() {
+        let mut raw = Vec::new();
+        raw.extend_from_slice(b"100644 MAKEFILE\0");
+        raw.extend_from_slice(&[5u8; 20]);
+        raw.extend_from_slice(b"100644 hello.py\0");
+        raw.extend_from_slice(&[3u8; 20]);
+        raw.extend_from_slice(b"100644 hello.rs\0");
+        raw.extend_from_slice(&[2u8; 20]);
+        raw.extend_from_slice(b"100644 hello.txt\0");
+        raw.extend_from_slice(&[1u8; 20]);
+        raw.extend_from_slice(b"100644 src/hello.s\0");
+        raw.extend_from_slice(&[6u8; 20]);
+        raw.extend_from_slice(b"100644 target/hello\0");
+        raw.extend_from_slice(&[4u8; 20]);
+
+        let entries = tree_parse(&raw).unwrap();
+        let serialized = tree_serialize(&entries);
+
+        assert_eq!(raw, serialized);
+    }
+
+    #[test]
+    fn reject_missing_mode_separator() {
+        let mut raw = Vec::new();
+        raw.extend_from_slice(b"100644hello.txt\0");
+        raw.extend_from_slice(&[1u8; 20]);
+
+        let err = tree_parse(&raw).unwrap_err();
+
+        assert_eq!(err.kind(), io::ErrorKind::InvalidData);
+    }
 }
