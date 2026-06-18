@@ -1,5 +1,6 @@
 use indexmap::IndexMap;
 use std::io;
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct CommitObject {
     pub kvlm: IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>,
 }
@@ -105,4 +106,88 @@ pub fn kvlm_serialize(kvlm: &IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>) -> Vec<u8>
         ret.extend_from_slice(&msg[0]);
     }
     ret
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn kvlm_parse_message_body() {
+        let mut raw = Vec::new();
+        raw.extend_from_slice(b"\ntest: adding unit-test for commitobject\n");
+
+        let kvlm = kvlm_parse(&raw, None, None).unwrap();
+        let expected = b"test: adding unit-test for commitobject\n".to_vec();
+
+        assert_eq!(kvlm.len(), 1);
+        let message = kvlm.get(&None).unwrap()[0].clone();
+
+        assert_eq!(message, expected);
+    }
+
+    #[test]
+    fn kvlm_parse_commit_headers_and_message() {
+        let raw = b"tree abc123\nparent def456\nauthor A <a@example.com> 00 +0394\ncommitter ChatGPT <gpt@oai.com> 31415926 -0505\n\nrefactor: rewrite git in rust\n";
+
+        let kvlm = kvlm_parse(raw, None, None).unwrap();
+
+        assert_eq!(kvlm.len(), 5);
+        assert_eq!(kvlm.get(&Some(b"tree".to_vec())).unwrap()[0], b"abc123");
+        assert_eq!(kvlm.get(&Some(b"parent".to_vec())).unwrap()[0], b"def456");
+        assert_eq!(
+            kvlm.get(&None).unwrap()[0],
+            b"refactor: rewrite git in rust\n"
+        );
+        assert_eq!(
+            kvlm.get(&Some(b"author".to_vec())).unwrap()[0],
+            b"A <a@example.com> 00 +0394"
+        );
+        assert_eq!(
+            kvlm.get(&Some(b"committer".to_vec())).unwrap()[0],
+            b"ChatGPT <gpt@oai.com> 31415926 -0505"
+        );
+    }
+
+    #[test]
+    fn kvlm_parse_repeated_parent_headers() {
+        let raw = b"tree abc\nparent one\nparent two\n\nmerge commit\n";
+        let kvlm = kvlm_parse(raw, None, None).unwrap();
+
+        assert_eq!(kvlm.len(), 3);
+        assert_eq!(kvlm.get(&Some(b"parent".to_vec())).unwrap().len(), 2);
+        assert_eq!(kvlm.get(&Some(b"parent".to_vec())).unwrap()[0], b"one");
+        assert_eq!(kvlm.get(&Some(b"parent".to_vec())).unwrap()[1], b"two");
+    }
+
+    #[test]
+    fn kvlm_parse_multiline_header_value() {
+        let raw = b"gpgsig line1\n line2\n line3\n\nmessage\n";
+        let kvlm = kvlm_parse(raw, None, None).unwrap();
+
+        assert_eq!(
+            kvlm.get(&Some(b"gpgsig".to_vec())).unwrap()[0],
+            b"line1\n line2\n line3".to_vec()
+        );
+    }
+
+    #[test]
+    fn simple_kvlm_serialize() {
+        let mut kvlm: IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>> = IndexMap::new();
+        let message = b"initial commit";
+        kvlm.insert(None, vec![message.to_vec()]);
+
+        let raw = kvlm_serialize(&kvlm);
+        let expected = b"\ninitial commit";
+        assert_eq!(raw, expected);
+    }
+
+    #[test]
+    fn parse_then_serialize_round_trip_kvlm() {
+        let raw = b"tree abc123\nparent def456\nauthor A <a@example.com> 00 +0394\ncommitter ChatGPT <gpt@oai.com> 31415926 -0505\n\nrefactor: rewrite git in rust\n";
+
+        let parsed = kvlm_parse(raw, None, None).unwrap();
+        let serialized = kvlm_serialize(&parsed);
+
+        assert_eq!(raw.to_vec(), serialized);
+    }
 }
