@@ -15,6 +15,20 @@ impl CommitObject {
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub struct TagObject {
+    pub kvlm: IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>,
+}
+
+impl TagObject {
+    pub fn new(kvlm: IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>) -> Self {
+        Self { kvlm }
+    }
+
+    pub fn get_kvlm(&self) -> &IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>> {
+        &self.kvlm
+    }
+}
 pub fn kvlm_parse(
     raw: &[u8],
     start: Option<usize>,
