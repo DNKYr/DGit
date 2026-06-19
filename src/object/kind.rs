@@ -8,10 +8,10 @@ pub enum ObjectKind {
 impl ObjectKind {
     pub fn as_str(&self) -> &str {
         match self {
-            ObjectKind::Blob => "Blob",
-            ObjectKind::Commit => "Commit",
-            ObjectKind::Tree => "Tree",
-            ObjectKind::Tag => "Tag",
+            ObjectKind::Blob => "blob",
+            ObjectKind::Commit => "commit",
+            ObjectKind::Tree => "tree",
+            ObjectKind::Tag => "tag",
         }
     }
 }
