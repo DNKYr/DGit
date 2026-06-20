@@ -1,5 +1,5 @@
 use super::{BlobObject, CommitObject, GitObject, TreeObject, kvlm_parse, tree_parse};
-use crate::repository;
+use crate::{object::TagObject, repository};
 use flate2::Compression;
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
@@ -68,11 +68,11 @@ pub fn read_object(repo: &repository::GitRepository, sha: &str) -> io::Result<Gi
             let tree = TreeObject::new(items);
             Ok(GitObject::Tree(tree))
         }
-        // Unimplemented object reading
-        b"tag" => Err(io::Error::new(
-            io::ErrorKind::Unsupported,
-            "tag object isn't supported yet to read",
-        )),
+        b"tag" => {
+            let kvlm = kvlm_parse(&data, None, None)?;
+            let tag = TagObject::new(kvlm);
+            Ok(GitObject::Tag(tag))
+        }
         _ => Err(io::Error::new(
             io::ErrorKind::InvalidData,
             "Non-existing object type",

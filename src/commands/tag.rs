@@ -31,7 +31,7 @@ fn tag_create(
     refs: &str,
     create_tag_object: bool,
 ) -> io::Result<()> {
-    let sha = find_object(repo, refs, None, false);
+    let sha = find_object(repo, refs, None, false)?;
 
     if create_tag_object {
         let sha = sha.as_bytes();

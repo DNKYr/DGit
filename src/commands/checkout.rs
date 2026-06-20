@@ -28,7 +28,7 @@ pub fn cmd_checkout(args: &cli::CheckoutArgs) -> io::Result<()> {
         fs::create_dir(&path)?;
     }
 
-    let sha = find_object(&repo, &args.commit, Some(object::ObjectKind::Tree), false);
+    let sha = find_object(&repo, &args.commit, Some(object::ObjectKind::Tree), true)?;
     let obj: object::TreeObject = match object::read_object(&repo, &sha)? {
         GitObject::Tree(tree) => tree,
         GitObject::Commit(tree) => {
