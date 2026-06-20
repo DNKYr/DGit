@@ -4,7 +4,7 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
-fn ref_resolve(repo: &GitRepository, reference: &[&str]) -> io::Result<String> {
+pub fn ref_resolve(repo: &GitRepository, reference: &[&str]) -> io::Result<String> {
     let path: PathBuf = repo_file(repo, reference, false)?;
     if !path.is_file() {
         return Err(io::Error::new(

@@ -15,7 +15,7 @@ pub fn cmd_cat_file(args: &CatFileArgs) -> io::Result<()> {
 }
 
 fn cat_file(repo: &GitRepository, obj: &str, fmt: Option<ObjectKind>) -> io::Result<()> {
-    let obj: GitObject = read_object(repo, &find_object(&repo, obj, fmt, false).as_str())?;
+    let obj: GitObject = read_object(repo, find_object(repo, obj, fmt, false)?.as_str())?;
     let mut stdout = io::stdout().lock();
     stdout.write_all(&obj.serialize()?)?;
     Ok(())

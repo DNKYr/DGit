@@ -18,7 +18,7 @@ fn ls_tree(
 ) -> io::Result<()> {
     let prefix = prefix.unwrap_or_default();
 
-    let sha = object::find_object(repo, reference, Some(object::ObjectKind::Tree), false);
+    let sha = object::find_object(repo, reference, Some(object::ObjectKind::Tree), true)?;
     let obj: object::TreeObject = match object::read_object(repo, &sha)? {
         GitObject::Tree(tree) => tree,
         _ => {
