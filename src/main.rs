@@ -4,7 +4,9 @@ mod object;
 mod refs;
 mod repository;
 
-use crate::commands::{cat_file, checkout, hash_object, init, log, ls_tree, show_ref, tag};
+use crate::commands::{
+    cat_file, checkout, hash_object, init, log, ls_tree, rev_parse, show_ref, tag,
+};
 use clap::Parser;
 use cli::{Cli, Commands};
 use std::env;
@@ -60,7 +62,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         Commands::Tag(args) => {
-            tag::cmd_tag(&args)?;
+            tag::cmd_tag(args)?;
+        }
+
+        Commands::RevParse(args) => {
+            rev_parse::cmd_rev_parse(args)?;
         }
     }
 

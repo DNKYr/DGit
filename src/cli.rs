@@ -34,6 +34,9 @@ pub enum Commands {
 
     /// List and create tags
     Tag(TagArgs),
+
+    /// Parse revision (or other objects) identifiers
+    RevParse(RevParseArgs),
 }
 
 #[derive(Args)]
@@ -119,4 +122,14 @@ pub struct TagArgs {
     /// The object the new tag will point to
     #[arg(default_value_t = String::from("HEAD"))]
     pub object: String,
+}
+
+#[derive(Args)]
+pub struct RevParseArgs {
+    /// Specify the expected type
+    #[arg(long = "type")]
+    pub object_type: Option<ObjectMode>,
+
+    /// The name to parse
+    pub name: String,
 }
