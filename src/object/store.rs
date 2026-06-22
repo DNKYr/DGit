@@ -1,5 +1,8 @@
 use super::{BlobObject, CommitObject, GitObject, TreeObject, kvlm_parse, tree_parse};
-use crate::{object::TagObject, repository};
+use crate::{
+    object::TagObject,
+    repository::{GitRepository, repo_file},
+};
 use flate2::Compression;
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
@@ -9,8 +12,8 @@ use std::{
     io::{self, Read, Write},
     path::PathBuf,
 };
-pub fn read_object(repo: &repository::GitRepository, sha: &str) -> io::Result<GitObject> {
-    let path: PathBuf = repository::repo_file(repo, &["objects", &sha[0..2], &sha[2..]], false)?;
+pub fn read_object(repo: &GitRepository, sha: &str) -> io::Result<GitObject> {
+    let path: PathBuf = repo_file(repo, &["objects", &sha[0..2], &sha[2..]], false)?;
     if !path.is_file() {
         return Err(io::Error::new(io::ErrorKind::NotFound, "Object not found"));
     }
@@ -80,10 +83,7 @@ pub fn read_object(repo: &repository::GitRepository, sha: &str) -> io::Result<Gi
     }
 }
 
-pub fn write_object(
-    object: &GitObject,
-    repo: Option<&repository::GitRepository>,
-) -> io::Result<String> {
+pub fn write_object(object: &GitObject, repo: Option<&GitRepository>) -> io::Result<String> {
     // serialize the data
     let data = object.serialize()?;
 
@@ -105,7 +105,7 @@ pub fn write_object(
     let sha = hex::encode(hasher.finalize());
 
     if let Some(r) = repo {
-        let path = repository::repo_file(&r, &["objects", &sha[0..2], &sha[2..]], true)?;
+        let path = repo_file(r, &["objects", &sha[0..2], &sha[2..]], true)?;
 
         if !path.exists() {
             let file = fs::File::create(path)?;
@@ -116,4 +116,65 @@ pub fn write_object(
     }
 
     Ok(sha)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    fn test_repo(name: &str) -> (PathBuf, GitRepository) {
+        let root = std::env::temp_dir().join(name);
+        let git_dir = root.join(".git");
+
+        std::fs::create_dir_all(git_dir).unwrap();
+
+        let repo = GitRepository::new(&root);
+        (root, repo)
+    }
+
+    fn write_object_blob_test(blob_content: &[u8], repo: Option<&GitRepository>) -> String {
+        let object = GitObject::Blob(BlobObject::new(blob_content.to_vec()));
+        write_object(&object, repo).unwrap()
+    }
+
+    fn test_expected_vs_actual(blob_content: Vec<u8>, actual_sha: &str) {
+        let format_bytes = b"blob";
+        let size_bytes = blob_content.len().to_string().into_bytes();
+        let mut hasher = Sha1::new();
+
+        let mut result = Vec::new();
+        result.extend_from_slice(format_bytes);
+        result.push(b' ');
+        result.extend_from_slice(&size_bytes);
+        result.push(0);
+        result.extend_from_slice(blob_content.as_slice());
+        hasher.update(&result);
+        let expected_sha = hex::encode(hasher.finalize());
+        assert_eq!(actual_sha, expected_sha);
+    }
+
+    #[test]
+    fn write_object_repo_is_none_blob() {
+        let blob_content = b"hello world".to_vec();
+        let actual_sha = write_object_blob_test(&blob_content, None);
+        test_expected_vs_actual(blob_content, &actual_sha);
+    }
+
+    #[test]
+    fn write_object_and_write_blob() {
+        let (_, repo) = test_repo("dgit-store-test-write-blob");
+        let blob_content = b"This is writing blob test".to_vec();
+        let actual_sha = write_object_blob_test(&blob_content, Some(&repo));
+
+        // first test computed_sha vs actual_sha for accuracy
+        test_expected_vs_actual(blob_content, &actual_sha);
+
+        // Then check if the sha actually exists in the test repo
+        repo_file(
+            &repo,
+            &["objects", &actual_sha[0..2], &actual_sha[2..]],
+            false,
+        )
+        .unwrap();
+    }
 }
