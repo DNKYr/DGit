@@ -95,4 +95,20 @@ mod tests {
 
         assert_eq!(resolved, sha);
     }
+
+    #[test]
+    fn ref_resolve_follows_symbolic_ref() {
+        let (root, repo) = test_repo("dgit-refs-test-symbolic-ref");
+        let sha = "fedcba9876543210fedcba9876543210fedcba98";
+        std::fs::write(root.join(".git").join("HEAD"), "ref: refs/heads/main").unwrap();
+        std::fs::write(
+            root.join(".git").join("refs").join("heads").join("main"),
+            sha,
+        )
+        .unwrap();
+
+        let resolved = ref_resolve(&repo, &["HEAD"]).unwrap();
+
+        assert_eq!(resolved, sha);
+    }
 }
