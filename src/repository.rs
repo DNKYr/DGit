@@ -81,6 +81,16 @@ pub fn repo_find(path: Option<&Path>) -> io::Result<GitRepository> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn test_repo(name: &str) -> (PathBuf, GitRepository) {
+        let root = std::env::temp_dir().join(name);
+        std::fs::create_dir_all(root.join(".git")).unwrap();
+
+        let repo = GitRepository::new(&root);
+
+        (root, repo)
+    }
+
     #[test]
     fn find_repo_in_test_path_root() {
         let root = std::env::temp_dir().join("dgit-repository-test-root");
@@ -105,10 +115,60 @@ mod tests {
 
     #[test]
     fn find_repo_outside_of_git_directory() {
-        let root = std::env::temp_dir().join("dgit-repository-test-outside-git-directory");
-        std::fs::create_dir_all(&root).unwrap();
+        let err = repo_find(Some(Path::new("/"))).unwrap_err();
 
-        let err = repo_find(Some(&root)).unwrap_err();
         assert_eq!(err.kind(), io::ErrorKind::NotFound);
+    }
+
+    #[test]
+    fn repo_path_builds_path_under_git_dir() {
+        let (root, repo) = test_repo("dgit-repository-test-repo-path");
+
+        let path = repo_path(&repo, &["objects", "aa", "bb"]);
+
+        assert_eq!(
+            path,
+            root.join(".git").join("objects").join("aa").join("bb")
+        );
+    }
+
+    #[test]
+    fn repo_dir_returns_existing_directory() {
+        let (root, repo) = test_repo("dgit-repository-test-existing-dir");
+        std::fs::create_dir_all(root.join(".git").join("refs").join("heads")).unwrap();
+
+        let path = repo_dir(&repo, &["refs", "heads"], false).unwrap();
+
+        assert_eq!(path, root.join(".git").join("refs").join("heads"));
+    }
+
+    #[test]
+    fn repo_dir_creates_missing_directory_when_requested() {
+        let (root, repo) = test_repo("dgit-repository-test-create-dir");
+
+        let path = repo_dir(&repo, &["objects", "pack"], true).unwrap();
+
+        assert_eq!(path, root.join(".git").join("objects").join("pack"));
+        assert!(path.is_dir());
+    }
+
+    #[test]
+    fn repo_dir_errors_for_missing_directory_without_mkdir() {
+        let (_, repo) = test_repo("dgit-repository-test-missing-dir");
+
+        let err = repo_dir(&repo, &["refs", "tags"], false).unwrap_err();
+
+        assert_eq!(err.kind(), io::ErrorKind::NotFound);
+    }
+
+    #[test]
+    fn repo_dir_errors_when_path_exists_but_is_file() {
+        let (root, repo) = test_repo("dgit-repository-test-file-instead-of-dir");
+        let file_path = root.join(".git").join("config");
+        std::fs::write(&file_path, "").unwrap();
+
+        let err = repo_dir(&repo, &["config"], false).unwrap_err();
+
+        assert_eq!(err.kind(), io::ErrorKind::Other);
     }
 }
