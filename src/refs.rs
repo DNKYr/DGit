@@ -64,3 +64,35 @@ pub fn ref_list(
     }
     Ok(ret)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_repo(name: &str) -> (PathBuf, GitRepository) {
+        let root = std::env::temp_dir().join(name);
+        let git_dir = root.join(".git");
+
+        std::fs::create_dir_all(git_dir.join("refs").join("heads")).unwrap();
+        std::fs::create_dir_all(git_dir.join("refs").join("tags")).unwrap();
+
+        let repo = GitRepository::new(&root);
+
+        (root, repo)
+    }
+
+    #[test]
+    fn ref_resolve_reads_direct_ref() {
+        let (root, repo) = test_repo("dgit-refs-test-direct-ref");
+        let sha = "0123456789abcdef0123456789abcdef01234567";
+        std::fs::write(
+            root.join(".git").join("refs").join("heads").join("main"),
+            sha,
+        )
+        .unwrap();
+
+        let resolved = ref_resolve(&repo, &["refs", "heads", "main"]).unwrap();
+
+        assert_eq!(resolved, sha);
+    }
+}
