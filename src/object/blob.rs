@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct BlobObject {
     pub data: Vec<u8>,
 }
