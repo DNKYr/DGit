@@ -111,4 +111,31 @@ mod tests {
 
         assert_eq!(resolved, sha);
     }
+
+    #[test]
+    fn ref_resolve_errors_for_missing_ref() {
+        let (_, repo) = test_repo("dgit-refs-test-missing-ref");
+
+        let err = ref_resolve(&repo, &["refs", "heads", "missing"]).unwrap_err();
+
+        assert_eq!(err.kind(), io::ErrorKind::NotFound);
+    }
+
+    #[test]
+    fn ref_list_lists_refs_recursively() {
+        let (root, repo) = test_repo("dgit-refs-test-list");
+        let main_sha = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        let tag_sha = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        let main_ref = root.join(".git").join("refs").join("heads").join("main");
+        let tag_ref = root.join(".git").join("refs").join("tags").join("v1.0");
+
+        std::fs::write(&main_ref, main_sha).unwrap();
+        std::fs::write(&tag_ref, tag_sha).unwrap();
+
+        let refs = ref_list(&repo, None).unwrap();
+
+        assert_eq!(refs.len(), 2);
+        assert_eq!(refs.get(&main_ref).unwrap(), main_sha);
+        assert_eq!(refs.get(&tag_ref).unwrap(), tag_sha);
+    }
 }
