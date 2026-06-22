@@ -2,6 +2,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::{env, fs};
 
+#[derive(Debug)]
 pub struct GitRepository {
     worktree: PathBuf,
     git_dir: PathBuf,
@@ -74,5 +75,40 @@ pub fn repo_find(path: Option<&Path>) -> io::Result<GitRepository> {
         )),
 
         Some(parent_path) => repo_find(Some(parent_path)),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn find_repo_in_test_path_root() {
+        let root = std::env::temp_dir().join("dgit-repository-test-root");
+
+        std::fs::create_dir_all(root.join(".git")).unwrap();
+        let repo = repo_find(Some(&root)).unwrap();
+
+        assert_eq!(repo.get_git_dir(), root.join(".git"));
+    }
+
+    #[test]
+    fn recursively_find_repo_in_test_path() {
+        let root = std::env::temp_dir().join("dgit-repository-test-recursive");
+        let child = root.join("recursive-test");
+
+        std::fs::create_dir_all(root.join(".git")).unwrap();
+        std::fs::create_dir_all(&child).unwrap();
+        let repo = repo_find(Some(&child)).unwrap();
+
+        assert_eq!(repo.get_git_dir(), root.join(".git"));
+    }
+
+    #[test]
+    fn find_repo_outside_of_git_directory() {
+        let root = std::env::temp_dir().join("dgit-repository-test-outside-git-directory");
+        std::fs::create_dir_all(&root).unwrap();
+
+        let err = repo_find(Some(&root)).unwrap_err();
+        assert_eq!(err.kind(), io::ErrorKind::NotFound);
     }
 }
