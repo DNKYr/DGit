@@ -171,4 +171,36 @@ mod tests {
 
         assert_eq!(err.kind(), io::ErrorKind::Other);
     }
+
+    #[test]
+    fn repo_file_builds_path_under_git_dir() {
+        let (root, repo) = test_repo("dgit-repository-test-repo-file");
+
+        let path = repo_file(&repo, &["HEAD"], false).unwrap();
+
+        assert_eq!(path, root.join(".git").join("HEAD"));
+    }
+
+    #[test]
+    fn repo_file_creates_parent_directories_when_requested() {
+        let (root, repo) = test_repo("dgit-repository-test-repo-file-create-parent");
+
+        let path = repo_file(&repo, &["refs", "heads", "main"], true).unwrap();
+
+        assert_eq!(
+            path,
+            root.join(".git").join("refs").join("heads").join("main")
+        );
+        assert!(root.join(".git").join("refs").join("heads").is_dir());
+        assert!(!path.exists());
+    }
+
+    #[test]
+    fn repo_file_errors_when_parent_directory_is_missing_without_mkdir() {
+        let (_, repo) = test_repo("dgit-repository-test-repo-file-missing-parent");
+
+        let err = repo_file(&repo, &["refs", "heads", "main"], false).unwrap_err();
+
+        assert_eq!(err.kind(), io::ErrorKind::NotFound);
+    }
 }
