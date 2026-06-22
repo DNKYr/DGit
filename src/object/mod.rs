@@ -13,6 +13,7 @@ use std::io;
 pub use store::{read_object, write_object};
 pub use tree::{TreeObject, tree_parse, tree_serialize};
 
+#[derive(Debug)]
 pub enum GitObject {
     Blob(BlobObject),
     Commit(CommitObject),

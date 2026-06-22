@@ -193,4 +193,11 @@ mod test {
 
         assert_eq!(read_blob_content, blob_content);
     }
+
+    #[test]
+    fn read_object_rejects_non_existing_object() {
+        let (_, repo) = test_repo("dgit-store-read-non-existing-object-test");
+        let err = read_object(&repo, "1234567890abcdefghij").unwrap_err();
+        assert_eq!(err.kind(), io::ErrorKind::NotFound);
+    }
 }
