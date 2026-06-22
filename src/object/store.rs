@@ -177,4 +177,20 @@ mod test {
         )
         .unwrap();
     }
+
+    #[test]
+    fn write_then_read_blob_roundtrip() {
+        let (_, repo) = test_repo("dgit-store-roundtrip-test");
+        let blob_content = b"roundtrip test".to_vec();
+        let actual_sha = write_object_blob_test(&blob_content, Some(&repo));
+
+        test_expected_vs_actual(blob_content.clone(), &actual_sha);
+
+        let read_blob_content = match read_object(&repo, &actual_sha).unwrap() {
+            GitObject::Blob(b) => b.data,
+            _ => panic!("The return git object type is not blob"),
+        };
+
+        assert_eq!(read_blob_content, blob_content);
+    }
 }
