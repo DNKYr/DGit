@@ -137,6 +137,15 @@ mod test {
         write_object(&object, repo).unwrap()
     }
 
+    fn write_raw_object(repo: &GitRepository, sha: &str, raw: &[u8]) {
+        let path = repo_file(repo, &["objects", &sha[0..2], &sha[2..]], true).unwrap();
+        let file = fs::File::create(path).unwrap();
+        let mut encoder = ZlibEncoder::new(file, Compression::default());
+
+        encoder.write_all(raw).unwrap();
+        encoder.finish().unwrap();
+    }
+
     fn test_expected_vs_actual(blob_content: Vec<u8>, actual_sha: &str) {
         let format_bytes = b"blob";
         let size_bytes = blob_content.len().to_string().into_bytes();
@@ -199,5 +208,49 @@ mod test {
         let (_, repo) = test_repo("dgit-store-read-non-existing-object-test");
         let err = read_object(&repo, "1234567890abcdefghij").unwrap_err();
         assert_eq!(err.kind(), io::ErrorKind::NotFound);
+    }
+
+    #[test]
+    fn read_object_rejects_missing_space_in_header() {
+        let (_, repo) = test_repo("dgit-store-malformed-missing-space");
+        let sha = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        write_raw_object(&repo, sha, b"blob5\0hello");
+
+        let err = read_object(&repo, sha).unwrap_err();
+
+        assert_eq!(err.kind(), io::ErrorKind::InvalidData);
+    }
+
+    #[test]
+    fn read_object_rejects_missing_null_byte_in_header() {
+        let (_, repo) = test_repo("dgit-store-malformed-missing-null");
+        let sha = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        write_raw_object(&repo, sha, b"blob 5hello");
+
+        let err = read_object(&repo, sha).unwrap_err();
+
+        assert_eq!(err.kind(), io::ErrorKind::InvalidData);
+    }
+
+    #[test]
+    fn read_object_rejects_invalid_size_header() {
+        let (_, repo) = test_repo("dgit-store-malformed-invalid-size");
+        let sha = "cccccccccccccccccccccccccccccccccccccccc";
+        write_raw_object(&repo, sha, b"blob five\0hello");
+
+        let err = read_object(&repo, sha).unwrap_err();
+
+        assert_eq!(err.kind(), io::ErrorKind::InvalidData);
+    }
+
+    #[test]
+    fn read_object_rejects_bad_length() {
+        let (_, repo) = test_repo("dgit-store-malformed-bad-length");
+        let sha = "dddddddddddddddddddddddddddddddddddddddd";
+        write_raw_object(&repo, sha, b"blob 10\0hello");
+
+        let err = read_object(&repo, sha).unwrap_err();
+
+        assert_eq!(err.kind(), io::ErrorKind::Other);
     }
 }
