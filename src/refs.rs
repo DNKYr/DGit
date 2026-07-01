@@ -78,8 +78,6 @@ pub fn get_active_branch(repo: &GitRepository) -> io::Result<Option<String>> {
 
     if let Some(target) = data.strip_prefix("ref: refs/heads/") {
         Ok(Some(target.to_string()))
-    } else if data.starts_with("ref: ") {
-        Ok(None)
     } else {
         Ok(None)
     }

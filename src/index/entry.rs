@@ -2,12 +2,15 @@ pub const ENTRY_FIXED_SIZE: usize = 62;
 
 pub const FLAG_STAGE_MASK: u16 = 0x3000;
 pub const FLAG_NAME_MASK: u16 = 0x0FFF;
+#[allow(dead_code)]
 pub const FLAG_ASSUME_VALID: u16 = 0x8000;
+#[allow(dead_code)]
 pub const FLAG_EXTENDED: u16 = 0x4000;
 
 pub const MODE_REGULAR: u32 = 0o100644;
 pub const MODE_EXECUTABLE: u32 = 0o100755;
 pub const MODE_SYMLINK: u32 = 0o120000;
+#[allow(dead_code)]
 pub const MODE_GITLINK: u32 = 0o160000;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -50,14 +53,17 @@ impl IndexEntry {
         (self.flags & FLAG_STAGE_MASK) >> 12
     }
 
+    #[allow(dead_code)]
     pub fn name_len(&self) -> usize {
         (self.flags & FLAG_NAME_MASK) as usize
     }
 
+    #[allow(dead_code)]
     pub fn set_name_len(&mut self, len: usize) {
         self.flags = (self.flags & !FLAG_NAME_MASK) | (len.min(0xFFF) as u16);
     }
 
+    #[allow(dead_code)]
     pub fn set_stage(&mut self, stage: u16) {
         self.flags = (self.flags & !FLAG_STAGE_MASK) | ((stage & 0x3) << 12);
     }

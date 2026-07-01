@@ -293,11 +293,10 @@ impl IgnoreRules {
 
             let mut pos = 0;
             while pos < path.len() {
-                if path[pos] == b'/' {
-                    if self.match_path(&path[..pos], true) {
+                if path[pos] == b'/'
+                    && self.match_path(&path[..pos], true) {
                         return true;
                     }
-                }
                 pos += 1;
             }
         }
@@ -315,6 +314,7 @@ impl IgnoreRules {
         ignored
     }
 
+    #[allow(dead_code)]
     pub fn filter_untracked(&self, files: &BTreeSet<Vec<u8>>) -> Vec<Vec<u8>> {
         files
             .iter()

@@ -1,8 +1,7 @@
-use indexmap::IndexMap;
 use std::{fs, io};
 
 use crate::cli;
-use crate::object::{GitObject, TagObject, find_object, write_object};
+use crate::object::{GitObject, KvlmMap, TagObject, find_object, write_object};
 use crate::refs::ref_list;
 use crate::repository::{GitRepository, repo_dir, repo_file, repo_find};
 
@@ -36,7 +35,7 @@ fn tag_create(
     if create_tag_object {
         let sha = sha.as_bytes();
         let byte_name = name.as_bytes();
-        let mut kvlm: IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>> = IndexMap::new();
+        let mut kvlm = KvlmMap::new();
         kvlm.insert(Some(b"object".to_vec()), vec![sha.to_vec()]);
         kvlm.insert(Some(b"type".to_vec()), vec![b"commit".to_vec()]);
         kvlm.insert(Some(b"tag".to_vec()), vec![byte_name.to_vec()]);

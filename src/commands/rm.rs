@@ -34,15 +34,14 @@ pub fn cmd_rm(args: &cli::RmArgs) -> io::Result<()> {
         let file_exists = abs_path.exists();
 
         if !args.cached && file_exists {
-            if let Ok(worktree_sha) = file_blob_sha(&repo, &path_bytes) {
-                if worktree_sha != idx_sha && !args.force {
+            if let Ok(worktree_sha) = file_blob_sha(&repo, &path_bytes)
+                && worktree_sha != idx_sha && !args.force {
                     eprintln!(
                         "error: '{}' has local modifications (use -f to override)",
                         file_path
                     );
                     continue;
                 }
-            }
 
             if let Err(e) = fs::remove_file(&abs_path) {
                 eprintln!("error: cannot remove '{}': {}", file_path, e);
@@ -70,7 +69,7 @@ fn file_blob_sha(repo: &crate::repository::GitRepository, path: &[u8]) -> io::Re
     let mut hasher = Sha1::new();
     hasher.update(b"blob ");
     hasher.update(&size_bytes);
-    hasher.update(&[0u8]);
+    hasher.update([0u8]);
     hasher.update(&data);
 
     Ok(hasher.finalize().into())

@@ -76,7 +76,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Commit(args) => {
             commit::cmd_commit(args)?;
         }
-        Commands::WriteTree {} => {
+        Commands::WriteTree => {
             write_tree::cmd_write_tree()?;
         }
     }

@@ -6,7 +6,7 @@ mod store;
 mod tree;
 
 pub use blob::BlobObject;
-pub use commit::{CommitObject, TagObject, kvlm_parse, kvlm_serialize};
+pub use commit::{CommitObject, TagObject, KvlmMap, kvlm_parse, kvlm_serialize};
 pub use kind::ObjectKind;
 pub use lookup::find_object;
 use std::io;

@@ -24,8 +24,8 @@ fn resolve_object(repo: &GitRepository, name: &str) -> io::Result<String> {
         let name = name.to_lowercase();
         let prefix = &name[0..2];
         let rem = &name[2..];
-        if let Ok(path) = repo_dir(repo, &["objects", prefix], false) {
-            if let Ok(directory) = fs::read_dir(path) {
+        if let Ok(path) = repo_dir(repo, &["objects", prefix], false)
+            && let Ok(directory) = fs::read_dir(path) {
                 for content in directory {
                     let dir_name = content?.file_name().into_string().map_err(|_| {
                         io::Error::new(
@@ -38,7 +38,6 @@ fn resolve_object(repo: &GitRepository, name: &str) -> io::Result<String> {
                     }
                 }
             }
-        }
     }
     // Try for reference
     if let Ok(as_tag) = ref_resolve(repo, &["refs", "tags", name]) {

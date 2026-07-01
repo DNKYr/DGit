@@ -4,6 +4,9 @@ use crate::repository::{GitRepository, repo_find};
 use std::collections::BTreeMap;
 use std::io;
 
+type DirEntries = Vec<(Vec<u8>, [u8; 20], u32)>;
+type EntryGroups = BTreeMap<Vec<u8>, DirEntries>;
+
 pub fn cmd_write_tree() -> io::Result<()> {
     let repo = repo_find(None)?;
     let sha = tree_sha_from_index(&repo)?;
@@ -26,7 +29,7 @@ fn write_tree_recursive(
     repo: &GitRepository,
     entries: &[(Vec<u8>, &IndexEntry)],
 ) -> io::Result<String> {
-    let mut groups: BTreeMap<Vec<u8>, Vec<(Vec<u8>, [u8; 20], u32)>> = BTreeMap::new();
+    let mut groups: EntryGroups = BTreeMap::new();
 
     for (path, entry) in entries {
         if let Some(slash_pos) = path.iter().position(|&b| b == b'/') {

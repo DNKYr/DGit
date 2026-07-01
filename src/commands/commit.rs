@@ -1,10 +1,9 @@
 use crate::cli;
 use crate::commands::write_tree;
 use crate::config::Config;
-use crate::object::{self, CommitObject, GitObject};
+use crate::object::{self, CommitObject, GitObject, KvlmMap};
 use crate::refs;
 use crate::repository::repo_find;
-use indexmap::IndexMap;
 use std::io;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -14,8 +13,7 @@ pub fn cmd_commit(args: &cli::CommitArgs) -> io::Result<()> {
     let branch = match refs::get_active_branch(&repo)? {
         Some(b) => b,
         None => {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
+            return Err(io::Error::other(
                 "HEAD is detached; cannot commit",
             ));
         }
@@ -28,8 +26,7 @@ pub fn cmd_commit(args: &cli::CommitArgs) -> io::Result<()> {
         .map(|s| s.to_string())
         .or_else(|| std::env::var("GIT_AUTHOR_NAME").ok())
         .ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::Other,
+            io::Error::other(
                 "user.name not set in config and GIT_AUTHOR_NAME not set",
             )
         })?;
@@ -39,15 +36,14 @@ pub fn cmd_commit(args: &cli::CommitArgs) -> io::Result<()> {
         .map(|s| s.to_string())
         .or_else(|| std::env::var("GIT_AUTHOR_EMAIL").ok())
         .ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::Other,
+            io::Error::other(
                 "user.email not set in config and GIT_AUTHOR_EMAIL not set",
             )
         })?;
 
     let tree_sha = write_tree::tree_sha_from_index(&repo)?;
 
-    let mut kvlm: IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>> = IndexMap::new();
+    let mut kvlm = KvlmMap::new();
 
     kvlm.insert(Some(b"tree".to_vec()), vec![tree_sha.into_bytes()]);
 

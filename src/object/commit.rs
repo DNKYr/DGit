@@ -1,39 +1,42 @@
 use indexmap::IndexMap;
 use std::io;
+
+pub type KvlmMap = IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>;
+
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct CommitObject {
-    pub kvlm: IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>,
+    pub kvlm: KvlmMap,
 }
 
 impl CommitObject {
-    pub fn new(kvlm: IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>) -> Self {
+    pub fn new(kvlm: KvlmMap) -> Self {
         Self { kvlm }
     }
 
-    pub fn get_kvlm(&self) -> &IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>> {
+    pub fn get_kvlm(&self) -> &KvlmMap {
         &self.kvlm
     }
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct TagObject {
-    pub kvlm: IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>,
+    pub kvlm: KvlmMap,
 }
 
 impl TagObject {
-    pub fn new(kvlm: IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>) -> Self {
+    pub fn new(kvlm: KvlmMap) -> Self {
         Self { kvlm }
     }
 
-    pub fn get_kvlm(&self) -> &IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>> {
+    pub fn get_kvlm(&self) -> &KvlmMap {
         &self.kvlm
     }
 }
 pub fn kvlm_parse(
     raw: &[u8],
     start: Option<usize>,
-    dct: Option<IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>>,
-) -> io::Result<IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>> {
+    dct: Option<KvlmMap>,
+) -> io::Result<KvlmMap> {
     let start = start.unwrap_or(0);
     let mut dct = dct.unwrap_or_default();
 
@@ -64,9 +67,7 @@ pub fn kvlm_parse(
             ));
         }
 
-        let mut msg: Vec<Vec<u8>> = Vec::new();
-
-        msg.push(raw[start + 1..].to_vec());
+        let msg: Vec<Vec<u8>> = vec![raw[start + 1..].to_vec()];
 
         dct.insert(None, msg);
         return Ok(dct);
@@ -84,12 +85,12 @@ pub fn kvlm_parse(
 
     let value = raw[spc + 1..end].to_vec();
 
-    dct.entry(Some(key)).or_insert_with(Vec::new).push(value);
+    dct.entry(Some(key)).or_default().push(value);
 
     kvlm_parse(raw, Some(end + 1), Some(dct))
 }
 
-pub fn kvlm_serialize(kvlm: &IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>>) -> Vec<u8> {
+pub fn kvlm_serialize(kvlm: &KvlmMap) -> Vec<u8> {
     let mut ret = Vec::new();
 
     for (key, value) in kvlm {
@@ -186,7 +187,7 @@ mod tests {
 
     #[test]
     fn simple_kvlm_serialize() {
-        let mut kvlm: IndexMap<Option<Vec<u8>>, Vec<Vec<u8>>> = IndexMap::new();
+        let mut kvlm: KvlmMap = KvlmMap::new();
         let message = b"initial commit";
         kvlm.insert(None, vec![message.to_vec()]);
 

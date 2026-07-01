@@ -39,11 +39,10 @@ pub fn cmd_status() -> io::Result<()> {
     if let Some(ref head) = head_tree {
         for path in &head_paths {
             if let Some(&(_, idx_sha)) = index_map.get(path) {
-                if let Some((_, head_sha)) = head.get(path) {
-                    if idx_sha.as_slice() != head_sha.as_slice() {
+                if let Some((_, head_sha)) = head.get(path)
+                    && idx_sha.as_slice() != head_sha.as_slice() {
                         staged_modified.push(path);
                     }
-                }
             } else {
                 staged_deleted.push(path);
             }
@@ -133,9 +132,11 @@ pub fn cmd_status() -> io::Result<()> {
     Ok(())
 }
 
+type FlatTree = BTreeMap<Vec<u8>, (Vec<u8>, Vec<u8>)>;
+
 fn read_head_tree_flat(
     repo: &GitRepository,
-) -> io::Result<Option<BTreeMap<Vec<u8>, (Vec<u8>, Vec<u8>)>>> {
+) -> io::Result<Option<FlatTree>> {
     let head_sha = match refs::ref_resolve(repo, &["HEAD"]) {
         Ok(sha) => sha,
         Err(_) => return Ok(None),
@@ -247,8 +248,6 @@ fn walk_dir(
 
         if file_type.is_dir() {
             walk_dir(base, &rel_path, files)?;
-        } else if file_type.is_symlink() {
-            files.insert(rel_path);
         } else {
             files.insert(rel_path);
         }
@@ -270,7 +269,7 @@ fn file_blob_sha(repo: &GitRepository, path: &[u8]) -> io::Result<[u8; 20]> {
     let mut hasher = Sha1::new();
     hasher.update(b"blob ");
     hasher.update(&size_bytes);
-    hasher.update(&[0u8]);
+    hasher.update([0u8]);
     hasher.update(&data);
 
     Ok(hasher.finalize().into())

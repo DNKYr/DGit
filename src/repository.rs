@@ -4,6 +4,7 @@ use std::{env, fs};
 
 #[derive(Debug)]
 pub struct GitRepository {
+    #[allow(dead_code)]
     worktree: PathBuf,
     git_dir: PathBuf,
 }
