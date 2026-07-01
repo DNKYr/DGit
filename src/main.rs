@@ -1,5 +1,6 @@
 mod cli;
 mod commands;
+mod gitignore;
 mod index;
 mod object;
 mod refs;

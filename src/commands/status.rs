@@ -1,3 +1,4 @@
+use crate::gitignore::IgnoreRules;
 use crate::index;
 use crate::object::{self, GitObject};
 use crate::refs;
@@ -10,6 +11,7 @@ use std::io;
 pub fn cmd_status() -> io::Result<()> {
     let repo = repo_find(None)?;
     let index = index::read_index(&repo)?;
+    let ignore_rules = IgnoreRules::load(&repo)?;
 
     let head_tree = read_head_tree_flat(&repo)?;
 
@@ -69,7 +71,7 @@ pub fn cmd_status() -> io::Result<()> {
     }
 
     for path in &worktree_files {
-        if !index_map.contains_key(path) {
+        if !index_map.contains_key(path) && !ignore_rules.is_ignored(path, false) {
             untracked.push(path);
         }
     }
