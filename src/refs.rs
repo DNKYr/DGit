@@ -2,6 +2,7 @@ use crate::repository::{GitRepository, repo_dir, repo_file};
 use indexmap::IndexMap;
 use std::fs;
 use std::io;
+use std::io::Write;
 use std::path::PathBuf;
 
 pub fn ref_resolve(repo: &GitRepository, reference: &[&str]) -> io::Result<String> {
@@ -63,6 +64,33 @@ pub fn ref_list(
         }
     }
     Ok(ret)
+}
+
+pub fn get_active_branch(repo: &GitRepository) -> io::Result<Option<String>> {
+    let head_path = repo_file(repo, &["HEAD"], false)?;
+
+    if !head_path.is_file() {
+        return Ok(None);
+    }
+
+    let data = fs::read_to_string(&head_path)?;
+    let data = data.trim();
+
+    if let Some(target) = data.strip_prefix("ref: refs/heads/") {
+        Ok(Some(target.to_string()))
+    } else if data.starts_with("ref: ") {
+        Ok(None)
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn ref_write(repo: &GitRepository, reference: &[&str], sha: &str) -> io::Result<()> {
+    let path = repo_file(repo, reference, true)?;
+    let mut file = fs::File::create(path)?;
+    file.write_all(sha.as_bytes())?;
+    file.write_all(b"\n")?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -137,5 +165,59 @@ mod tests {
         assert_eq!(refs.len(), 2);
         assert_eq!(refs.get(&main_ref).unwrap(), main_sha);
         assert_eq!(refs.get(&tag_ref).unwrap(), tag_sha);
+    }
+
+    #[test]
+    fn get_active_branch_returns_branch_name() {
+        let (root, repo) = test_repo("dgit-refs-test-active-branch");
+        std::fs::write(root.join(".git").join("HEAD"), "ref: refs/heads/main").unwrap();
+
+        let branch = get_active_branch(&repo).unwrap();
+        assert_eq!(branch, Some("main".to_string()));
+    }
+
+    #[test]
+    fn get_active_branch_returns_none_for_detached_head() {
+        let (root, repo) = test_repo("dgit-refs-test-detached-head");
+        std::fs::write(
+            root.join(".git").join("HEAD"),
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        )
+        .unwrap();
+
+        let branch = get_active_branch(&repo).unwrap();
+        assert_eq!(branch, None);
+    }
+
+    #[test]
+    fn ref_write_creates_file_with_sha() {
+        let (root, repo) = test_repo("dgit-refs-test-ref-write");
+        let sha = "cccccccccccccccccccccccccccccccccccccccc";
+        ref_write(&repo, &["refs", "heads", "feature"], sha).unwrap();
+
+        let path = root
+            .join(".git")
+            .join("refs")
+            .join("heads")
+            .join("feature");
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert_eq!(content.trim(), sha);
+    }
+
+    #[test]
+    fn ref_write_creates_parent_directories() {
+        let (root, repo) = test_repo("dgit-refs-test-ref-write-dirs");
+        let sha = "dddddddddddddddddddddddddddddddddddddddd";
+        ref_write(&repo, &["refs", "remotes", "origin", "HEAD"], sha).unwrap();
+
+        let path = root
+            .join(".git")
+            .join("refs")
+            .join("remotes")
+            .join("origin")
+            .join("HEAD");
+        assert!(path.is_file());
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert_eq!(content.trim(), sha);
     }
 }
