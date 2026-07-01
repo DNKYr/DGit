@@ -246,6 +246,30 @@ pub fn read_index(repo: &GitRepository) -> io::Result<Index> {
         entries.push(entry);
     }
 
+    while offset + 20 < data.len() {
+        if offset + 8 > data.len() {
+            break;
+        }
+        let ext_sig = &data[offset..offset + 4];
+        let ext_size = u32_from_be(&data, offset + 4)? as usize;
+        offset += 8;
+
+        if ext_sig[0].is_ascii_uppercase() {
+            if offset + ext_size > data.len() {
+                break;
+            }
+            offset += ext_size;
+        } else {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!(
+                    "Unsupported mandatory index extension: {:?}",
+                    String::from_utf8_lossy(ext_sig)
+                ),
+            ));
+        }
+    }
+
     let content_end = offset;
     if content_end + 20 > data.len() {
         return Err(io::Error::new(

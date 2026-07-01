@@ -11,7 +11,7 @@ pub enum Commands {
     /// initialize .git directory
     Init(InitArgs),
 
-    /// Check if the current path is within a git directory
+    /// Check the status of the repository
     Status {},
 
     /// Provide content of repository objects

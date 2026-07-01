@@ -6,13 +6,12 @@ mod refs;
 mod repository;
 
 use crate::commands::{
-    add, cat_file, checkout, hash_object, init, log, ls_files, ls_tree, rev_parse, show_ref, tag,
-    write_tree,
+    add, cat_file, checkout, hash_object, init, log, ls_files, ls_tree, rev_parse, show_ref,
+    status, tag, write_tree,
 };
 use clap::Parser;
 use cli::{Cli, Commands};
 use std::env;
-use std::process;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
@@ -29,16 +28,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("{msg}");
             }
         }
-        Commands::Status {} => match repository::repo_find(Some(&current_directory_path)) {
-            Ok(repo) => {
-                println!("{:?}", repo.get_git_dir().display());
-            }
-
-            Err(err_msg) => {
-                println!("{err_msg}");
-                process::exit(1);
-            }
-        },
+        Commands::Status {} => {
+            status::cmd_status()?;
+        }
         Commands::CatFile(args) => {
             cat_file::cmd_cat_file(args)?;
         }
