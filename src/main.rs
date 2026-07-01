@@ -7,6 +7,7 @@ mod repository;
 
 use crate::commands::{
     add, cat_file, checkout, hash_object, init, log, ls_files, ls_tree, rev_parse, show_ref, tag,
+    write_tree,
 };
 use clap::Parser;
 use cli::{Cli, Commands};
@@ -74,6 +75,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Commands::Add(args) => {
             add::cmd_add(args)?;
+        }
+        Commands::WriteTree {} => {
+            write_tree::cmd_write_tree()?;
         }
     }
 

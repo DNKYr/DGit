@@ -9,3 +9,4 @@ pub mod ls_tree;
 pub mod rev_parse;
 pub mod show_ref;
 pub mod tag;
+pub mod write_tree;

@@ -43,6 +43,9 @@ pub enum Commands {
 
     /// Add file contents to the index
     Add(AddArgs),
+
+    /// Create a tree object from the current index
+    WriteTree,
 }
 
 #[derive(Args)]

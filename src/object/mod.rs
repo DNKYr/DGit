@@ -11,7 +11,7 @@ pub use kind::ObjectKind;
 pub use lookup::find_object;
 use std::io;
 pub use store::{read_object, write_object};
-pub use tree::{TreeObject, tree_parse, tree_serialize};
+pub use tree::{TreeObject, TreeLeaf, tree_parse, tree_serialize};
 
 #[derive(Debug)]
 pub enum GitObject {
