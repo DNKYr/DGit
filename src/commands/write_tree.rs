@@ -1,26 +1,29 @@
 use crate::index::{self, IndexEntry};
 use crate::object::{self, GitObject, TreeLeaf, TreeObject};
-use crate::repository::repo_find;
+use crate::repository::{GitRepository, repo_find};
 use std::collections::BTreeMap;
 use std::io;
 
 pub fn cmd_write_tree() -> io::Result<()> {
     let repo = repo_find(None)?;
-    let index = index::read_index(&repo)?;
+    let sha = tree_sha_from_index(&repo)?;
+    println!("{sha}");
+    Ok(())
+}
 
+pub fn tree_sha_from_index(repo: &GitRepository) -> io::Result<String> {
+    let index = index::read_index(repo)?;
     let entries: Vec<(Vec<u8>, &IndexEntry)> = index
         .entries
         .iter()
         .map(|e| (e.path.clone(), e))
         .collect();
 
-    let sha = write_tree_recursive(&repo, &entries)?;
-    println!("{sha}");
-    Ok(())
+    write_tree_recursive(repo, &entries)
 }
 
 fn write_tree_recursive(
-    repo: &crate::repository::GitRepository,
+    repo: &GitRepository,
     entries: &[(Vec<u8>, &IndexEntry)],
 ) -> io::Result<String> {
     let mut groups: BTreeMap<Vec<u8>, Vec<(Vec<u8>, [u8; 20], u32)>> = BTreeMap::new();

@@ -47,6 +47,9 @@ pub enum Commands {
     /// Remove files from the working tree and from the index
     Rm(RmArgs),
 
+    /// Record changes to the repository
+    Commit(CommitArgs),
+
     /// Create a tree object from the current index
     WriteTree,
 }
@@ -173,4 +176,11 @@ pub struct RmArgs {
     /// Files to remove
     #[arg(required = true)]
     pub paths: Vec<String>,
+}
+
+#[derive(Args)]
+pub struct CommitArgs {
+    /// Commit message
+    #[arg(short)]
+    pub message: String,
 }

@@ -8,8 +8,8 @@ mod refs;
 mod repository;
 
 use crate::commands::{
-    add, cat_file, checkout, hash_object, init, log, ls_files, ls_tree, rev_parse, rm, show_ref,
-    status, tag, write_tree,
+    add, cat_file, checkout, commit, hash_object, init, log, ls_files, ls_tree, rev_parse, rm,
+    show_ref, status, tag, write_tree,
 };
 use clap::Parser;
 use cli::{Cli, Commands};
@@ -72,6 +72,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Commands::Rm(args) => {
             rm::cmd_rm(args)?;
+        }
+        Commands::Commit(args) => {
+            commit::cmd_commit(args)?;
         }
         Commands::WriteTree {} => {
             write_tree::cmd_write_tree()?;
