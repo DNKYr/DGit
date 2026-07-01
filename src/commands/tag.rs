@@ -42,9 +42,9 @@ fn tag_create(
         kvlm.insert(Some(b"tag".to_vec()), vec![byte_name.to_vec()]);
         kvlm.insert(
             Some(b"tagger".to_vec()),
-            vec![b"DGit <dgit@example.com>".to_vec()],
+            vec![b"dgit <dgit@example.com>".to_vec()],
         );
-        kvlm.insert(None, vec![b"A tag created by DGit, can't modify".to_vec()]);
+        kvlm.insert(None, vec![b"A tag created by dgit, can't modify".to_vec()]);
         let tag = GitObject::Tag(TagObject::new(kvlm));
         let tag_sha = write_object(&tag, Some(repo))?;
         ref_create(repo, &["refs", "tags", name], &tag_sha)

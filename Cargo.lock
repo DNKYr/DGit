@@ -3,17 +3,6 @@
 version = 4
 
 [[package]]
-name = "DGit"
-version = "0.1.0"
-dependencies = [
- "clap",
- "flate2",
- "hex",
- "indexmap",
- "sha1",
-]
-
-[[package]]
 name = "adler2"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -161,6 +150,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77727bb15fa921304124b128af125e7e3b968275d1b108b379190264f4423710"
 dependencies = [
  "hybrid-array",
+]
+
+[[package]]
+name = "dgit"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "flate2",
+ "hex",
+ "indexmap",
+ "sha1",
 ]
 
 [[package]]

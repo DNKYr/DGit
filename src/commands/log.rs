@@ -11,7 +11,7 @@ pub fn cmd_log(args: &cli::LogArgs) -> io::Result<()> {
     let repo = repo_find(None)?;
     let mut seen_set: IndexSet<String> = IndexSet::new();
 
-    println!("digraph DGitlog{{");
+    println!("digraph dgitlog{{");
     println!("  node[shape=rect]");
     log_graphviz(
         &repo,

@@ -15,5 +15,5 @@ pub fn init(path: &Path) -> io::Result<String> {
     fs::create_dir_all(ref_dir_path)?;
     fs::write(head_file_path, "ref: refs/heads/main")?;
 
-    Ok(String::from("Initialized empty DGit repository"))
+    Ok(String::from("Initialized empty dgit repository"))
 }
