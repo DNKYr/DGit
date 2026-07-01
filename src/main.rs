@@ -6,7 +6,7 @@ mod refs;
 mod repository;
 
 use crate::commands::{
-    cat_file, checkout, hash_object, init, log, ls_files, ls_tree, rev_parse, show_ref, tag,
+    add, cat_file, checkout, hash_object, init, log, ls_files, ls_tree, rev_parse, show_ref, tag,
 };
 use clap::Parser;
 use cli::{Cli, Commands};
@@ -71,6 +71,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Commands::LsFiles(args) => {
             ls_files::cmd_ls_files(args)?;
+        }
+        Commands::Add(args) => {
+            add::cmd_add(args)?;
         }
     }
 

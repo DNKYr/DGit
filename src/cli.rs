@@ -40,6 +40,9 @@ pub enum Commands {
 
     /// Show information about files in the index and the working tree
     LsFiles(LsFilesArgs),
+
+    /// Add file contents to the index
+    Add(AddArgs),
 }
 
 #[derive(Args)]
@@ -142,4 +145,11 @@ pub struct LsFilesArgs {
     /// Show staged contents' mode bits, object name and stage
     #[arg(short)]
     pub stage: bool,
+}
+
+#[derive(Args)]
+pub struct AddArgs {
+    /// Files to add content from
+    #[arg(required = true)]
+    pub paths: Vec<String>,
 }

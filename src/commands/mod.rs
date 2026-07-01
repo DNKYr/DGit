@@ -1,3 +1,4 @@
+pub mod add;
 pub mod cat_file;
 pub mod checkout;
 pub mod hash_object;
