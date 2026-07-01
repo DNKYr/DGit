@@ -1,5 +1,6 @@
 mod cli;
 mod commands;
+mod index;
 mod object;
 mod refs;
 mod repository;
