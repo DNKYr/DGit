@@ -37,6 +37,9 @@ pub enum Commands {
 
     /// Parse revision (or other objects) identifiers
     RevParse(RevParseArgs),
+
+    /// Show information about files in the index and the working tree
+    LsFiles(LsFilesArgs),
 }
 
 #[derive(Args)]
@@ -132,4 +135,11 @@ pub struct RevParseArgs {
 
     /// The name to parse
     pub name: String,
+}
+
+#[derive(Args)]
+pub struct LsFilesArgs {
+    /// Show staged contents' mode bits, object name and stage
+    #[arg(short)]
+    pub stage: bool,
 }
