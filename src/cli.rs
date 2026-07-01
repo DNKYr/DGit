@@ -44,6 +44,9 @@ pub enum Commands {
     /// Add file contents to the index
     Add(AddArgs),
 
+    /// Remove files from the working tree and from the index
+    Rm(RmArgs),
+
     /// Create a tree object from the current index
     WriteTree,
 }
@@ -153,6 +156,21 @@ pub struct LsFilesArgs {
 #[derive(Args)]
 pub struct AddArgs {
     /// Files to add content from
+    #[arg(required = true)]
+    pub paths: Vec<String>,
+}
+
+#[derive(Args)]
+pub struct RmArgs {
+    /// Only remove from the index, leave files in the working tree
+    #[arg(long)]
+    pub cached: bool,
+
+    /// Override the safety check for unstaged modifications
+    #[arg(short)]
+    pub force: bool,
+
+    /// Files to remove
     #[arg(required = true)]
     pub paths: Vec<String>,
 }

@@ -7,6 +7,7 @@ pub mod log;
 pub mod ls_files;
 pub mod ls_tree;
 pub mod rev_parse;
+pub mod rm;
 pub mod show_ref;
 pub mod status;
 pub mod tag;
